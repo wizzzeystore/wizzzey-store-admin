@@ -33,15 +33,31 @@ const productSchema = z.object({
   lowStockThreshold: z.coerce.number().optional(),
   availableSizes: z.array(z.string()).optional(),
   colors: z.array(z.object({ name: z.string(), code: z.string() })).optional(),
-  weight: z.object({ value: z.coerce.number(), unit: z.enum(["g", "kg", "lb", "oz"]) }).optional(),
-  dimensions: z.object({ length: z.coerce.number(), width: z.coerce.number(), height: z.coerce.number(), unit: z.enum(["cm", "m", "in"]) }).optional(),
+  weight: z.object({ value: z.coerce.number().optional(), unit: z.enum(["g", "kg", "lb", "oz"]).optional() }).optional(),
+  dimensions: z.object({
+    length: z.coerce.number().optional(),
+    width: z.coerce.number().optional(),
+    height: z.coerce.number().optional(),
+    unit: z.enum(["cm", "m", "in"]).optional()
+  }).optional(),
   tags: z.array(z.string()).optional(),
   status: z.enum(["draft", "active", "archived", "out_of_stock"]).optional().default("draft"),
   isFeatured: z.boolean().optional().default(false),
-  seo: z.object({ title: z.string().optional(), description: z.string().optional(), keywords: z.array(z.string()).optional() }).optional(),
-  ratings: z.object({ average: z.coerce.number().optional(), count: z.coerce.number().optional() }).optional(),
+  seo: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    keywords: z.array(z.string()).optional()
+  }).optional(),
+  ratings: z.object({
+    average: z.coerce.number().optional(),
+    count: z.coerce.number().optional()
+  }).optional(),
   barcode: z.string().optional(),
-  media: z.array(z.object({ url: z.string(), type: z.enum(["image", "video"]), alt: z.string().optional() })).optional(),
+  media: z.array(z.object({
+    url: z.string(),
+    type: z.enum(["image", "video"]),
+    alt: z.string().optional()
+  })).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
