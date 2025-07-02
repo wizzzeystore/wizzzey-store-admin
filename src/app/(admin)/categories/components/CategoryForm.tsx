@@ -21,7 +21,7 @@ const categorySchema = z.object({
   description: z.string().optional(),
   parentId: z.string().nullable().optional(),
   imageUrl: z.string().url("Must be a valid URL.").optional().or(z.literal("")),
-  slug: z.string().optional(),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase and hyphen-separated."),
   icon: z.string().optional(),
   isActive: z.boolean().optional().default(true),
   displayOrder: z.coerce.number().int().optional().default(0),
@@ -163,7 +163,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
           name="slug"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Slug (Optional)</FormLabel>
+              <FormLabel>Slug</FormLabel>
               <FormControl><Input placeholder="auto-generated if empty" {...field} /></FormControl>
               <FormDescription>URL-friendly version of the name. Auto-generated if left blank.</FormDescription>
               <FormMessage />
