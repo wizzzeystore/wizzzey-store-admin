@@ -128,6 +128,12 @@ export interface AppSettings {
   siteName: string;
   siteDescription: string;
   contactEmail: string; // email
+  siteHeroImage?: {
+    name: string; // e.g., "hero-image.jpg"
+    type: string; // e.g., "image/jpeg"
+    size: number; // in bytes
+    uri: string; // e.g., "https://example.com/images/hero-image.jpg"
+  };
   contactPhone?: string;
   socialLinks?: {
     facebook?: string; // uri

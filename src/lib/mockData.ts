@@ -90,4 +90,5 @@ export let MOCK_APP_SETTINGS: AppSettings = {
     socialLinks: { facebook: 'https://facebook.com/wizzzey', twitter: 'https://twitter.com/wizzzey' },
     themeSettings: { primaryColor: '#4B0082', secondaryColor: '#9ACD32', fontFamily: 'Inter' },
     updatedAt: new Date().toISOString(),
+    siteHeroImage: { name: 'hero-image.jpg', type: 'image/jpeg', size: 204800, uri: 'https://placehold.co/1200x600.png' }, // Mock file object
 };

@@ -318,7 +318,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
                     multiple
                     onChange={handleFileChange}
                     accept="image/*"
-                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                    className="block w-full h-13 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                     disabled={isUploading}
                   />
                 </FormControl>

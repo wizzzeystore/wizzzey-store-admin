@@ -413,15 +413,26 @@ export const getActivityLogs = async (page = 1, limit = 10, filters = {}): Promi
 };
 
 
-// AppSettings API functions - Mocked as endpoint is not in OpenAPI spec
 export const getAppSettings = async (): Promise<ApiResponse<AppSettings>> => {
-  await delay(300);
-  return { type: 'OK', data: MOCK_APP_SETTINGS };
+  const response = await fetchApi<ApiResponse<AppSettings>>('app-settings');
+  if (response.type === 'ERROR') {
+    console.error('Failed to fetch app settings:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  const data = response.data.settings[0] ;
+  return { type: 'OK', data, message: 'App settings fetched successfully' };
 };
 export const updateAppSettings = async (settingsData: Partial<AppSettings>): Promise<ApiResponse<AppSettings>> => {
-  await delay(300);
-  const updatedSettings = { ...MOCK_APP_SETTINGS, ...settingsData, updatedAt: new Date().toISOString() };
-  return { type: 'OK', data: updatedSettings, message: 'Settings updated successfully' };
+  console.log("Log: Updating app settings with data:", settingsData);
+  const response = await fetchApi<ApiResponse<AppSettings>>(`app-settings/${settingsData._id}`, {
+    method: 'PUT',
+    body: JSON.stringify(settingsData),
+  });
+  if (response.type === 'ERROR') {
+    console.error('Failed to update app settings:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', data: response.data.settings[0], message: 'App settings updated successfully' };
 };
 
 // --- DASHBOARD STATS ---
