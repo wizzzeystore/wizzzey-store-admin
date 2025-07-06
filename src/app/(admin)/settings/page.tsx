@@ -465,7 +465,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="relative inline-block">
                     <Image
-                      src={currentSettings.storeLogo.url}
+                      src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.storeLogo.url}`}
                       alt="Store Logo"
                       width={200}
                       height={100}
@@ -540,7 +540,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="relative inline-block">
                     <Image
-                      src={currentSettings.heroImage.url}
+                      src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.heroImage.url}`}
                       alt="Hero Image"
                       width={400}
                       height={200}
