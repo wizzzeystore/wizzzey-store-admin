@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { SoftInventoryItem } from "@/types/ecommerce";
 import { useToast } from "@/hooks/use-toast";
-import { addSoftInventoryItem } from "@/lib/apiService"; // Mocked API
+import { addSoftInventoryItem, updateSoftInventoryItem } from "@/lib/apiService";
 import React, { useEffect, useState } from "react";
 
 const softInventorySchema = z.object({
@@ -70,16 +70,13 @@ export default function SoftInventoryItemDialog({ isOpen, onClose, itemData }: S
     try {
       let response;
       if (itemData) {
-        // response = await updateSoftInventoryItem(itemData.id, values); // Requires API endpoint
-        toast({ title: "Update Mock", description: `Called update for ${itemData.id}. Backend needed.`, variant: "default" });
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-        response = { type: "OK" }; // Mock response
+        response = await updateSoftInventoryItem(itemData.id, values);
       } else {
-        response = await addSoftInventoryItem(values); // Uses mocked API
+        response = await addSoftInventoryItem(values);
       }
 
       if (response.type === "OK") {
-        toast({ title: "Success", description: `Soft Inventory item ${itemData ? 'updated (mocked)' : 'added (mocked)'} successfully.` });
+        toast({ title: "Success", description: `Soft Inventory item ${itemData ? 'updated' : 'added'} successfully.` });
         onClose(true); 
       } else {
         toast({ title: "Error", description: response.message || "An error occurred.", variant: "destructive" });

@@ -5,7 +5,7 @@ import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, RefreshCw } from 'lucide-react'; // Added RefreshCw
 import { SoftInventoryItem } from '@/types/ecommerce';
-import { getSoftInventoryItems, addSoftInventoryItem } from '@/lib/apiService'; // Mocked API
+import { getSoftInventoryItems, addSoftInventoryItem, deleteSoftInventoryItem, updateSoftInventoryItem } from '@/lib/apiService';
 import { SoftInventoryColumns } from './components/SoftInventoryColumns';
 import { DataTable } from '@/app/(admin)/products/components/data-table'; 
 import { useToast } from '@/hooks/use-toast';
@@ -28,10 +28,16 @@ export default function SoftInventoryPage() {
     setIsLoading(true);
     try {
       const response = await getSoftInventoryItems(pagination.pageIndex + 1, pagination.pageSize);
+      console.log('Soft Inventory API Response:', response); // Debug log
+      
       if (response.type === 'OK' && response.data?.softInventoryItems) {
         setSoftInventory(response.data.softInventoryItems);
         if (response.pagination) {
             setPagination(prev => ({ ...prev, pageCount: response.pagination!.totalPages }));
+        }
+        // Show success toast for empty results
+        if (response.data.softInventoryItems.length === 0) {
+          toast({ title: "Success", description: "No soft inventory items found." });
         }
       } else {
         toast({ title: "Error", description: response.message || "Failed to fetch soft inventory.", variant: "destructive" });
@@ -74,26 +80,22 @@ export default function SoftInventoryPage() {
 
   const handleConfirmDelete = async () => {
     if (!itemToDeleteId) return;
-    // Actual delete logic would go here, e.g.:
-    // setIsLoading(true);
-    // try {
-    //   const response = await deleteSoftInventoryItem(itemToDeleteId); // Needs actual API
-    //   if (response.type === 'OK') {
-    //     toast({ title: "Success", description: "Item deleted successfully." });
-    //     fetchData(); 
-    //   } else {
-    //     toast({ title: "Error", description: response.message || "Failed to delete item.", variant: "destructive" });
-    //   }
-    // } catch (error) {
-    //   toast({ title: "Error", description: "An error occurred.", variant: "destructive" });
-    // } finally {
-    //   setIsLoading(false);
-    // }
-    toast({title: "Delete Mock", description: `Called delete for ${itemToDeleteId}. Backend needed.`});
-    // Optimistically remove or refetch for mock
-    setSoftInventory(prev => prev.filter(item => item.id !== itemToDeleteId));
-    setIsConfirmDeleteDialogOpen(false);
-    setItemToDeleteId(null);
+    setIsLoading(true);
+    try {
+      const response = await deleteSoftInventoryItem(itemToDeleteId);
+      if (response.type === 'OK') {
+        toast({ title: "Success", description: "Item deleted successfully." });
+        fetchData(); 
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to delete item.", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "An error occurred.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+      setIsConfirmDeleteDialogOpen(false);
+      setItemToDeleteId(null);
+    }
   };
 
 

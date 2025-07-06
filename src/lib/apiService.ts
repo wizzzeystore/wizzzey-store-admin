@@ -15,7 +15,8 @@ import type {
   ActivityLog,
   AppSettings,
   LoginPayload,
-  SoftInventoryItem, 
+  SoftInventoryItem,
+  HardInventoryItem, 
   BrandDailyOrderItem, 
   OrderPlacedBatch,
   DashboardStatsData, 
@@ -197,7 +198,20 @@ export const deleteBrand = async (id: string): Promise<ApiResponse> => {
 // Inventory API functions (for Product Stock based on OpenAPI)
 export const getInventoryItems = async (page = 1, limit = 10, filters: Record<string, any> = {}): Promise<PaginatedResponse<Inventory, 'inventory'>> => {
   const queryParams = new URLSearchParams({ page: String(page), limit: String(limit), ...filters });
-  return fetchApi<PaginatedResponse<Inventory, 'inventory'>>(`inventory?${queryParams.toString()}`);
+  const response = await fetchApi<any>(`inventory?${queryParams.toString()}`);
+  
+  // Transform the response to match expected format
+  if (response.type === 'OK' && response.data) {
+    return {
+      ...response,
+      data: {
+        inventory: response.data.items || []
+      },
+      pagination: response.meta
+    };
+  }
+  
+  return response as PaginatedResponse<Inventory, 'inventory'>;
 };
 export const getInventoryItemById = async (id: string): Promise<ApiResponse<{inventory: Inventory}>> => {
   return fetchApi<ApiResponse<{inventory: Inventory}>>(`inventory/${id}`);
@@ -251,18 +265,27 @@ export const deleteFaq = async (id: string): Promise<ApiResponse> => {
 
 // Soft Inventory API functions (Mocked - not in OpenAPI)
 export const getSoftInventoryItems = async (page = 1, limit = 10, filters: Record<string, any> = {}): Promise<PaginatedResponse<SoftInventoryItem, 'softInventoryItems'>> => {
-  await delay(300);
-  const mockItems: SoftInventoryItem[] = [
-    { id: 'soft-1', brandName: 'TechCorp', sku: 'SPX-001', size: 'N/A', color: 'Black', quantity: 50, lastUpdated: new Date().toISOString() },
-    { id: 'soft-2', brandName: 'Bookish', sku: 'BGN-001', size: 'Paperback', color: 'Red', quantity: 100, lastUpdated: new Date().toISOString() },
-  ];
-  return { type: 'OK', data: { softInventoryItems: mockItems }, pagination: {total: mockItems.length, page, limit, totalPages: Math.ceil(mockItems.length/limit), hasNextPage: (page * limit < mockItems.length) , hasPrevPage: page > 1} };
+  const queryParams = new URLSearchParams({ page: String(page), limit: String(limit), ...filters });
+  const response = await fetchApi<any>(`soft-inventory?${queryParams.toString()}`);
+  
+  // Transform the response to match expected format
+  if (response.type === 'OK' && response.data) {
+    return {
+      ...response,
+      data: {
+        softInventoryItems: response.data.softInventoryItems || []
+      },
+      pagination: response.meta
+    };
+  }
+  
+  return response as PaginatedResponse<SoftInventoryItem, 'softInventoryItems'>;
 };
-export const addSoftInventoryItem = async (itemData: Omit<SoftInventoryItem, 'id' | 'lastUpdated'>): Promise<ApiResponse<SoftInventoryItem>> => {
-  await delay(300);
-  const newItem: SoftInventoryItem = { ...itemData, id: `soft-${Date.now()}`, lastUpdated: new Date().toISOString() };
-  console.log("Mock Add Soft Inventory:", newItem);
-  return { type: 'OK', data: newItem, message: 'Soft inventory item added (mocked).' };
+export const addSoftInventoryItem = async (itemData: Omit<SoftInventoryItem, 'id' | 'lastUpdated' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<SoftInventoryItem>> => {
+  return fetchApi<ApiResponse<SoftInventoryItem>>('soft-inventory', {
+    method: 'POST',
+    body: JSON.stringify(itemData),
+  });
 };
 
 // Brand Daily Orders API functions (Mocked - not in OpenAPI)
@@ -530,4 +553,120 @@ export const getDashboardStats = async (): Promise<ApiResponse<DashboardStatsDat
     // };
     // return { type: 'OK', data: mockData, message: "Dashboard stats fetched (mocked)." };
     return fetchApi<ApiResponse<DashboardStatsData>>('dashboard/stats');
+};
+
+// --- SOFT INVENTORY API FUNCTIONS ---
+export const getSoftInventoryItemById = async (id: string): Promise<ApiResponse<{ softInventoryItem: SoftInventoryItem }>> => {
+  return fetchApi<ApiResponse<{ softInventoryItem: SoftInventoryItem }>>(`soft-inventory/${id}`);
+};
+
+export const updateSoftInventoryItem = async (id: string, itemData: Partial<SoftInventoryItem>): Promise<ApiResponse<SoftInventoryItem>> => {
+  return fetchApi<ApiResponse<SoftInventoryItem>>(`soft-inventory/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(itemData),
+  });
+};
+
+export const deleteSoftInventoryItem = async (id: string): Promise<ApiResponse> => {
+  return fetchApi<ApiResponse>(`soft-inventory?id=${id}`, {
+    method: 'DELETE',
+  });
+};
+
+export const getLowStockItems = async (threshold = 10): Promise<ApiResponse<{ lowStockItems: SoftInventoryItem[] }>> => {
+  return fetchApi<ApiResponse<{ lowStockItems: SoftInventoryItem[] }>>(`soft-inventory/low-stock?threshold=${threshold}`);
+};
+
+export const getOutOfStockItems = async (): Promise<ApiResponse<{ outOfStockItems: SoftInventoryItem[] }>> => {
+  return fetchApi<ApiResponse<{ outOfStockItems: SoftInventoryItem[] }>>('soft-inventory/out-of-stock');
+};
+
+export const bulkUpdateSoftInventoryQuantities = async (updates: { id: string; quantity: number }[]): Promise<ApiResponse<{ updatedItems: SoftInventoryItem[]; errors: any[] }>> => {
+  return fetchApi<ApiResponse<{ updatedItems: SoftInventoryItem[]; errors: any[] }>>('soft-inventory/bulk-update', {
+    method: 'POST',
+    body: JSON.stringify({ updates }),
+  });
+};
+
+// --- HARD INVENTORY API FUNCTIONS ---
+export const getHardInventoryItems = async (page = 1, limit = 10, filters: Record<string, any> = {}): Promise<PaginatedResponse<HardInventoryItem, 'hardInventoryItems'>> => {
+  const queryParams = new URLSearchParams({ page: String(page), limit: String(limit), ...filters });
+  const response = await fetchApi<any>(`hard-inventory?${queryParams.toString()}`);
+  
+  // Transform the response to match expected format
+  if (response.type === 'OK' && response.data) {
+    return {
+      ...response,
+      data: {
+        hardInventoryItems: response.data.hardInventoryItems || []
+      },
+      pagination: response.meta
+    };
+  }
+  
+  return response as PaginatedResponse<HardInventoryItem, 'hardInventoryItems'>;
+};
+
+export const getHardInventoryItemById = async (id: string): Promise<ApiResponse<{ hardInventoryItem: HardInventoryItem }>> => {
+  return fetchApi<ApiResponse<{ hardInventoryItem: HardInventoryItem }>>(`hard-inventory/${id}`);
+};
+
+export const createHardInventoryItem = async (itemData: Omit<HardInventoryItem, 'id' | 'lastUpdated' | 'lastSyncAt' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<HardInventoryItem>> => {
+  return fetchApi<ApiResponse<HardInventoryItem>>('hard-inventory', {
+    method: 'POST',
+    body: JSON.stringify(itemData),
+  });
+};
+
+export const updateHardInventoryItem = async (id: string, itemData: Partial<HardInventoryItem>): Promise<ApiResponse<HardInventoryItem>> => {
+  return fetchApi<ApiResponse<HardInventoryItem>>(`hard-inventory/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(itemData),
+  });
+};
+
+export const deleteHardInventoryItem = async (id: string): Promise<ApiResponse> => {
+  return fetchApi<ApiResponse>(`hard-inventory?id=${id}`, {
+    method: 'DELETE',
+  });
+};
+
+export const getHardInventoryByPlatform = async (platform: string, page = 1, limit = 10): Promise<PaginatedResponse<HardInventoryItem, 'hardInventoryItems'>> => {
+  const queryParams = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const response = await fetchApi<any>(`hard-inventory/platform/${platform}?${queryParams.toString()}`);
+  
+  // Transform the response to match expected format
+  if (response.type === 'OK' && response.data) {
+    return {
+      ...response,
+      data: {
+        hardInventoryItems: response.data.hardInventoryItems || []
+      },
+      pagination: response.meta
+    };
+  }
+  
+  return response as PaginatedResponse<HardInventoryItem, 'hardInventoryItems'>;
+};
+
+export const getLowStockByPlatform = async (platform: string, threshold = 10): Promise<ApiResponse<{ lowStockItems: HardInventoryItem[] }>> => {
+  return fetchApi<ApiResponse<{ lowStockItems: HardInventoryItem[] }>>(`hard-inventory/platform/${platform}/low-stock?threshold=${threshold}`);
+};
+
+export const getOutOfStockByPlatform = async (platform: string): Promise<ApiResponse<{ outOfStockItems: HardInventoryItem[] }>> => {
+  return fetchApi<ApiResponse<{ outOfStockItems: HardInventoryItem[] }>>(`hard-inventory/platform/${platform}/out-of-stock`);
+};
+
+export const bulkUpdateHardInventoryQuantities = async (updates: { id: string; quantity: number }[]): Promise<ApiResponse<{ updatedItems: HardInventoryItem[]; errors: any[] }>> => {
+  return fetchApi<ApiResponse<{ updatedItems: HardInventoryItem[]; errors: any[] }>>('hard-inventory/bulk-update', {
+    method: 'POST',
+    body: JSON.stringify({ updates }),
+  });
+};
+
+export const syncPlatformData = async (platform: string, items: any[]): Promise<ApiResponse<{ syncedItems: HardInventoryItem[]; errors: any[] }>> => {
+  return fetchApi<ApiResponse<{ syncedItems: HardInventoryItem[]; errors: any[] }>>(`hard-inventory/platform/${platform}/sync`, {
+    method: 'POST',
+    body: JSON.stringify({ items }),
+  });
 };

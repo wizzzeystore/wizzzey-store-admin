@@ -29,6 +29,8 @@ export default function ProductStockLevelsPage() {
     setIsLoading(true);
     try {
       const response = await getInventoryItems(pagination.pageIndex + 1, pagination.pageSize);
+      console.log('Inventory API Response:', response); // Debug log
+      
       if (response.type === 'OK' && response.data?.inventory) { 
         setInventoryItems(response.data.inventory);
         if (response.pagination) {
@@ -36,6 +38,10 @@ export default function ProductStockLevelsPage() {
                 ...prev,
                 pageCount: response.pagination!.totalPages,
             }));
+        }
+        // Show success toast for empty results
+        if (response.data.inventory.length === 0) {
+          toast({ title: "Success", description: "No inventory items found." });
         }
       } else {
         toast({ title: "Error", description: response.message || "Failed to fetch inventory items.", variant: "destructive" });

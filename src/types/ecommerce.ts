@@ -301,7 +301,32 @@ export interface SoftInventoryItem {
   size: string;
   color?: string;
   quantity: number;
+  status: 'in_stock' | 'low_stock' | 'out_of_stock';
+  isActive: boolean;
   lastUpdated: string; // date-time
+  createdAt?: string; // date-time
+  updatedAt?: string; // date-time
+}
+
+export interface HardInventoryItem {
+  id: string; // uuid
+  brandName: string;
+  sku: string;
+  size: string;
+  color?: string;
+  quantity: number;
+  platform: 'amazon' | 'myntra' | 'flipkart' | 'nykaa' | 'other';
+  platformSku?: string;
+  platformProductId?: string;
+  platformUrl?: string;
+  platformPrice?: number;
+  platformStatus: 'active' | 'inactive' | 'pending' | 'suspended';
+  status: 'in_stock' | 'low_stock' | 'out_of_stock';
+  isActive: boolean;
+  lastUpdated: string; // date-time
+  lastSyncAt: string; // date-time
+  createdAt?: string; // date-time
+  updatedAt?: string; // date-time
 }
 
 export interface BrandDailyOrderItem {
