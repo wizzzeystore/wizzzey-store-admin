@@ -11,6 +11,7 @@ import { DataTable } from './components/data-table';
 import { useToast } from '@/hooks/use-toast';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { RowSelectionState } from '@tanstack/react-table';
+import { PermissionGuard } from '@/components/PermissionGuard';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -102,7 +103,7 @@ export default function ProductsPage() {
   const selectedCount = Object.keys(rowSelection).length;
 
   return (
-    <>
+    <PermissionGuard permission="canManageProducts">
       <PageHeader
         title="Products"
         description="Manage all products in your store."
@@ -155,6 +156,6 @@ export default function ProductsPage() {
         title="Delete Product"
         description="Are you sure you want to delete this product? This action cannot be undone."
       />
-    </>
+    </PermissionGuard>
   );
 }

@@ -353,12 +353,46 @@ export const updateOrderPlacedBatch = async (batchId: string, updateData: Partia
 // User API functions
 export const getUsers = async (page = 1, limit = 10, filters: Record<string,any> = {}): Promise<PaginatedResponse<User, 'users'>> => {
   const queryParams = new URLSearchParams({ page: String(page), limit: String(limit), ...filters });
-  return fetchApi<PaginatedResponse<User, 'users'>>(`users?${queryParams.toString()}`);
+  const response = await fetchApi<any>(`users?${queryParams.toString()}`);
+  
+  // Transform the response to match expected format
+  if (response.type === 'OK' && response.data) {
+    return {
+      ...response,
+      data: {
+        users: response.data.users || []
+      },
+      pagination: response.meta
+    };
+  }
+  
+  return response as PaginatedResponse<User, 'users'>;
+};
+
+export const getUsersByRole = async (role: string, page = 1, limit = 10): Promise<PaginatedResponse<User, 'users'>> => {
+  const queryParams = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const response = await fetchApi<any>(`users/role/${role}?${queryParams.toString()}`);
+  
+  if (response.type === 'OK' && response.data) {
+    return {
+      ...response,
+      data: {
+        users: response.data.users || []
+      },
+      pagination: response.data.pagination
+    };
+  }
+  
+  return response as PaginatedResponse<User, 'users'>;
+};
+
+export const getUserStats = async (): Promise<ApiResponse<{ stats: any[]; total: number; active: number }>> => {
+  return fetchApi<ApiResponse<{ stats: any[]; total: number; active: number }>>('users/stats');
 };
 
 export const updateUser = async (id: string, userData: Partial<User>): Promise<ApiResponse<User>> => {
   const { password, ...dataToUpdate } = userData;
-  return fetchApi<ApiResponse<User>>(`users?id=${id}`, {
+  return fetchApi<ApiResponse<User>>(`users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(dataToUpdate),
   });
@@ -375,6 +409,16 @@ export const deleteUser = async (id: string): Promise<ApiResponse> => {
   return fetchApi<ApiResponse>(`users?id=${id}`, {
     method: 'DELETE',
   });
+};
+
+export const toggleUserStatus = async (id: string): Promise<ApiResponse<User>> => {
+  return fetchApi<ApiResponse<User>>(`users/${id}/toggle-status`, {
+    method: 'PATCH',
+  });
+};
+
+export const getCurrentUserInfo = async (): Promise<ApiResponse<{ user: User; availableRoutes: string[]; permissions: any }>> => {
+  return fetchApi<ApiResponse<{ user: User; availableRoutes: string[]; permissions: any }>>('auth/me');
 };
 
 

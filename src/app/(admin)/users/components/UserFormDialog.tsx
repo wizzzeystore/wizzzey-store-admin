@@ -1,207 +1,390 @@
-
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { User } from "@/types/ecommerce";
-import { useToast } from "@/hooks/use-toast";
-import { updateUser, createUser } from "@/lib/apiService"; // Added createUser
-import React, { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
-
-// Schema now includes an optional password, which we'll make conditionally required in the form
-const userSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Invalid email address."),
-  role: z.enum(["Admin", "User"]),
-  avatarUrl: z.string().url("Must be a valid URL for avatar.").optional().or(z.literal("")),
-  password: z.string().optional(), // Password is optional in schema, required in form for new users
-}).refine(data => {
-    // If it's a new user (implied by password being potentially set), password must be at least 6 chars.
-    // This refine is a bit tricky because password is optional in the Zod schema itself
-    // to allow the form to be used for editing without requiring password change.
-    // For actual creation, the form will ensure password is provided.
-    if (data.password && data.password.length < 6) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Password must be at least 6 characters long.",
-    path: ["password"], // specify the path to show the error message
-});
-
-
-type UserFormValues = z.infer<typeof userSchema>;
+import React, { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { User, Brand } from '@/types/ecommerce';
+import { createUser, updateUser, getBrands } from '@/lib/apiService';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserFormDialogProps {
   isOpen: boolean;
   onClose: (refresh?: boolean) => void;
-  userData?: User | null; // For editing
+  user?: User | null;
 }
 
-export default function UserFormDialog({ isOpen, onClose, userData }: UserFormDialogProps) {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const isEditing = !!userData;
-
-  const form = useForm<UserFormValues>({
-    resolver: zodResolver(userSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      role: "User",
-      avatarUrl: "",
-      password: "", // Initialize password for the form
-    },
+export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialogProps) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'Customer' as 'Admin' | 'Customer' | 'Moderator' | 'BrandPartner',
+    assignedBrand: '',
+    phone: '',
+    isActive: true,
+    permissions: {
+      canManageUsers: false,
+      canManageProducts: false,
+      canManageOrders: false,
+      canManageInventory: false,
+      canManageBrands: false,
+      canViewAnalytics: false
+    }
   });
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingBrands, setIsLoadingBrands] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
-      if (userData) { // Editing existing user
-        form.reset({
-          name: userData.name || "",
-          email: userData.email || "",
-          role: userData.role || "User",
-          avatarUrl: userData.avatarUrl || "",
-          password: "", // Don't prefill password for editing
+      fetchBrands();
+      if (user) {
+        setFormData({
+          name: user.name || '',
+          email: user.email || '',
+          password: '',
+          role: user.role || 'Customer',
+          assignedBrand: user.assignedBrand?._id || '',
+          phone: user.phone || '',
+          isActive: user.isActive ?? true,
+          permissions: user.permissions || {
+            canManageUsers: false,
+            canManageProducts: false,
+            canManageOrders: false,
+            canManageInventory: false,
+            canManageBrands: false,
+            canViewAnalytics: false
+          }
         });
-      } else { // Adding new user
-        form.reset({
-          name: "",
-          email: "",
-          role: "User",
-          avatarUrl: "",
-          password: "", // Clear password for new user form
+      } else {
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          role: 'Customer',
+          assignedBrand: '',
+          phone: '',
+          isActive: true,
+          permissions: {
+            canManageUsers: false,
+            canManageProducts: false,
+            canManageOrders: false,
+            canManageInventory: false,
+            canManageBrands: false,
+            canViewAnalytics: false
+          }
         });
       }
     }
-  }, [userData, form, isOpen]);
+  }, [isOpen, user]);
 
-
-  const onSubmit = async (values: UserFormValues) => {
-    setIsLoading(true);
+  const fetchBrands = async () => {
+    setIsLoadingBrands(true);
     try {
-      let response;
-      if (isEditing && userData) { // Editing existing user
-        // Password should not be sent if not changed.
-        // For simplicity, our current API for PUT /users might ignore password or require it to be explicitly handled.
-        // Assuming API ignores password if not provided or is empty.
-        const { password, ...updateValues } = values;
-        const payload = password && password.trim() !== "" ? values : updateValues;
-        response = await updateUser(userData.id, payload);
-      } else { // Creating new user
-        if (!values.password || values.password.length < 6) {
-            form.setError("password", { type: "manual", message: "Password is required and must be at least 6 characters." });
-            setIsLoading(false);
-            return;
-        }
-        response = await createUser(values as Omit<User, 'id' | 'createdAt' | 'updatedAt'>);
-      }
-
-      if (response.type === "OK") {
-        toast({ title: "Success", description: `User ${isEditing ? 'updated' : 'created'} successfully.` });
-        onClose(true); 
-      } else {
-        toast({ title: "Error", description: response.message || `Failed to ${isEditing ? 'update' : 'create'} user.`, variant: "destructive" });
+      const response = await getBrands(1, 100);
+      if (response.type === 'OK' && response.data?.brands) {
+        setBrands(response.data.brands);
       }
     } catch (error) {
-      toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
+      console.error('Failed to fetch brands:', error);
+    } finally {
+      setIsLoadingBrands(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePermissionChange = (permission: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [permission]: checked
+      }
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const submitData = {
+        ...formData,
+        assignedBrand: formData.assignedBrand || undefined
+      };
+
+      let response;
+      if (user) {
+        // Update existing user
+        response = await updateUser(user.id || user._id || '', submitData);
+      } else {
+        // Create new user
+        if (!submitData.password) {
+          toast({ title: "Error", description: "Password is required for new users.", variant: "destructive" });
+          setIsLoading(false);
+          return;
+        }
+        response = await createUser(submitData);
+      }
+
+      if (response.type === 'OK') {
+        toast({ 
+          title: "Success", 
+          description: user ? "User updated successfully." : "User created successfully." 
+        });
+        onClose(true);
+      } else {
+        toast({ 
+          title: "Error", 
+          description: response.message || "Failed to save user.", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "An error occurred while saving the user.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const getRolePermissions = (role: string) => {
+    switch (role) {
+      case 'Admin':
+        return {
+          canManageUsers: true,
+          canManageProducts: true,
+          canManageOrders: true,
+          canManageInventory: true,
+          canManageBrands: true,
+          canViewAnalytics: true
+        };
+      case 'Moderator':
+        return {
+          canManageUsers: false,
+          canManageProducts: true,
+          canManageOrders: true,
+          canManageInventory: true,
+          canManageBrands: false,
+          canViewAnalytics: true
+        };
+      case 'BrandPartner':
+        return {
+          canManageUsers: false,
+          canManageProducts: false,
+          canManageOrders: true,
+          canManageInventory: false,
+          canManageBrands: false,
+          canViewAnalytics: false
+        };
+      case 'Customer':
+        return {
+          canManageUsers: false,
+          canManageProducts: false,
+          canManageOrders: false,
+          canManageInventory: false,
+          canManageBrands: false,
+          canViewAnalytics: false
+        };
+      default:
+        return formData.permissions;
+    }
+  };
+
+  const handleRoleChange = (role: string) => {
+    const permissions = getRolePermissions(role);
+    setFormData(prev => ({
+      ...prev,
+      role: role as 'Admin' | 'Customer' | 'Moderator' | 'BrandPartner',
+      permissions
+    }));
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[480px]">
+    <Dialog open={isOpen} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit User" : "Add New User"}</DialogTitle>
-          <DialogDescription>
-            {isEditing ? "Update the details for this user." : "Fill in the details for the new user."}
-          </DialogDescription>
+          <DialogTitle>
+            {user ? 'Edit User' : 'Add New User'}
+          </DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl><Input type="email" placeholder="user@example.com" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {!isEditing && ( // Only show password field when adding a new user
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
-                    <FormDescription>Minimum 6 characters.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                required
               />
-            )}
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="User">User</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="avatarUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Avatar URL (Optional)</FormLabel>
-                  <FormControl><Input type="url" placeholder="https://example.com/avatar.png" {...field} /></FormControl>
-                  <FormDescription>Provide a direct link to the user's avatar image.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onClose()} disabled={isLoading}>Cancel</Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditing ? "Save Changes" : "Create User"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">
+                Password {!user && '*'}
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                required={!user}
+                placeholder={user ? "Leave blank to keep current password" : ""}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Role *</Label>
+              <Select value={formData.role} onValueChange={handleRoleChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Customer">Customer</SelectItem>
+                  <SelectItem value="BrandPartner">Brand Partner</SelectItem>
+                  <SelectItem value="Moderator">Moderator</SelectItem>
+                  <SelectItem value="Admin">Administrator</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assignedBrand">
+                Assigned Brand {formData.role === 'BrandPartner' && '*'}
+              </Label>
+              <Select 
+                value={formData.assignedBrand || "none"} 
+                onValueChange={(value) => handleInputChange('assignedBrand', value === "none" ? "" : value)}
+                disabled={isLoadingBrands}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select brand" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Brand Assigned</SelectItem>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => handleInputChange('isActive', checked)}
+              />
+              <Label htmlFor="isActive">Active Account</Label>
+            </div>
+          </div>
+
+          {/* Permissions Section - Only show for Admin role */}
+          {formData.role === 'Admin' && (
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Permissions</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="canManageUsers"
+                    checked={formData.permissions.canManageUsers}
+                    onCheckedChange={(checked) => handlePermissionChange('canManageUsers', checked)}
+                  />
+                  <Label htmlFor="canManageUsers">Manage Users</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="canManageProducts"
+                    checked={formData.permissions.canManageProducts}
+                    onCheckedChange={(checked) => handlePermissionChange('canManageProducts', checked)}
+                  />
+                  <Label htmlFor="canManageProducts">Manage Products</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="canManageOrders"
+                    checked={formData.permissions.canManageOrders}
+                    onCheckedChange={(checked) => handlePermissionChange('canManageOrders', checked)}
+                  />
+                  <Label htmlFor="canManageOrders">Manage Orders</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="canManageInventory"
+                    checked={formData.permissions.canManageInventory}
+                    onCheckedChange={(checked) => handlePermissionChange('canManageInventory', checked)}
+                  />
+                  <Label htmlFor="canManageInventory">Manage Inventory</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="canManageBrands"
+                    checked={formData.permissions.canManageBrands}
+                    onCheckedChange={(checked) => handlePermissionChange('canManageBrands', checked)}
+                  />
+                  <Label htmlFor="canManageBrands">Manage Brands</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="canViewAnalytics"
+                    checked={formData.permissions.canViewAnalytics}
+                    onCheckedChange={(checked) => handlePermissionChange('canViewAnalytics', checked)}
+                  />
+                  <Label htmlFor="canViewAnalytics">View Analytics</Label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => onClose()}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : (user ? 'Update User' : 'Create User')}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

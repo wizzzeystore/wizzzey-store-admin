@@ -5,10 +5,12 @@ import type { Brand } from "@/types/ecommerce";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, MoreHorizontal, Edit, Trash2, ExternalLink, Settings } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Edit, Trash2, ExternalLink, Settings, Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { canAccessOrders } from "@/lib/permissions";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BrandColumnsProps {
   onDeleteRequested: (brandId: string) => void; 
@@ -17,6 +19,7 @@ interface BrandColumnsProps {
 const API_HOST = process.env.NEXT_PUBLIC_API_URL;
 
 export const BrandColumns = ({ onDeleteRequested }: BrandColumnsProps): ColumnDef<Brand>[] => {
+  const { user } = useAuth();
   
   return [
   {
@@ -114,6 +117,13 @@ export const BrandColumns = ({ onDeleteRequested }: BrandColumnsProps): ColumnDe
                 <Settings className="mr-2 h-4 w-4" /> Manage Brand
               </Link>
             </DropdownMenuItem>
+            {canAccessOrders(user) && (
+              <DropdownMenuItem asChild>
+                <Link href={`/brands/${brand.id}/orders`}>
+                  <Package className="mr-2 h-4 w-4" /> View Orders
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onDeleteRequested(brand.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
               <Trash2 className="mr-2 h-4 w-4" /> Delete

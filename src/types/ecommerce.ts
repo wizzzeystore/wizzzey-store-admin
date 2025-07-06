@@ -5,7 +5,28 @@ export interface User {
   id?: string; // uuid (for backward compatibility)
   name: string;
   email: string; // email
-  role: 'Admin' | 'User';
+  role: 'Admin' | 'Customer' | 'Moderator' | 'BrandPartner';
+  assignedBrand?: {
+    _id: string;
+    name: string;
+    slug: string;
+  };
+  permissions?: {
+    canManageUsers: boolean;
+    canManageProducts: boolean;
+    canManageOrders: boolean;
+    canManageInventory: boolean;
+    canManageBrands: boolean;
+    canViewAnalytics: boolean;
+  };
+  phone?: string;
+  shippingAddress?: any;
+  billingAddress?: any;
+  isActive?: boolean;
+  isVerified?: boolean;
+  lastLogin?: string; // date-time
+  lastOrderProcessed?: string; // date-time
+  totalOrdersProcessed?: number;
   avatarUrl?: string; // uri
   createdAt?: string; // date-time
   updatedAt?: string; // date-time

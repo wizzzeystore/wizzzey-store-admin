@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import AppLogo from '@/components/AppLogo';
 import { UserNav } from '@/components/UserNav';
 import { useAuth } from '@/contexts/AuthContext';
+import { canAccessOrders, canAccessUsers, canAccessProducts, canAccessInventory, canAccessBrands, canAccessAnalytics } from '@/lib/permissions';
 import {
   LayoutDashboard, ShoppingBag, Users, Settings, ListOrdered, Activity, BarChart3,
   Users2, ShoppingCart, PercentSquare, Newspaper, MessageSquareQuote, Briefcase, Palette, HardDrive, Warehouse
@@ -37,26 +38,50 @@ interface NavItem {
   exact?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/products', label: 'Products', icon: ShoppingBag },
-  { href: '/categories', label: 'Categories', icon: Briefcase },
-  { href: '/brands', label: 'Brands', icon: Palette },
-  { href: '/inventory', label: 'Inventory', icon: Warehouse },
-  { href: '/orders', label: 'Orders', icon: ShoppingCart },
-  { href: '/customers', label: 'Customers', icon: Users2 },
-  { href: '/discounts', label: 'Discounts', icon: PercentSquare },
-  {
+const getNavItems = (user: any): NavItem[] => {
+  const items: NavItem[] = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  ];
+
+  if (canAccessProducts(user)) {
+    items.push({ href: '/products', label: 'Products', icon: ShoppingBag });
+  }
+
+  items.push({ href: '/categories', label: 'Categories', icon: Briefcase });
+
+  if (canAccessBrands(user)) {
+    items.push({ href: '/brands', label: 'Brands', icon: Palette });
+  }
+
+  if (canAccessInventory(user)) {
+    items.push({ href: '/inventory', label: 'Inventory', icon: Warehouse });
+  }
+
+  if (canAccessOrders(user)) {
+    items.push({ href: '/orders', label: 'Orders', icon: ShoppingCart });
+  }
+
+  items.push({ href: '/customers', label: 'Customers', icon: Users2 });
+  items.push({ href: '/discounts', label: 'Discounts', icon: PercentSquare });
+
+  items.push({
     href: '/blogs', label: 'Blogs', icon: Newspaper, subItems: [
       { href: '/blogs', label: 'Manage Posts', icon: Newspaper, exact: true },
       { href: '/blogs/seo-optimizer', label: 'SEO Optimizer', icon: BarChart3 },
     ]
-  },
-  { href: '/faqs', label: 'FAQs', icon: MessageSquareQuote },
-  { href: '/users', label: 'User Management', icon: Users },
-  { href: '/activity-logs', label: 'Activity Logs', icon: Activity },
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
+  });
+
+  items.push({ href: '/faqs', label: 'FAQs', icon: MessageSquareQuote });
+
+  if (canAccessUsers(user)) {
+    items.push({ href: '/users', label: 'User Management', icon: Users });
+  }
+
+  items.push({ href: '/activity-logs', label: 'Activity Logs', icon: Activity });
+  items.push({ href: '/settings', label: 'Settings', icon: Settings });
+
+  return items;
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -80,6 +105,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     );
   }
+  
+  const navItems = getNavItems(user);
   
   const renderNavItems = (items: NavItem[], isSubMenu = false) => {
     return items.map((item) => {
