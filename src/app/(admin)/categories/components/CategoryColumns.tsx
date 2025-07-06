@@ -43,22 +43,7 @@ export const CategoryColumns = ({ onDeleteRequested }: CategoryColumnsProps): Co
     cell: ({ row }) => {
       const category = row.original;
       const placeholderImage = "https://placehold.co/60x60.png";
-      let displayImage = placeholderImage;
-
-      // Priority: uploaded image > imageUrl > placeholder
-      if (category.image?.url) {
-        displayImage = category.image.url;
-      } else if (category.imageUrl) {
-        if (category.imageUrl.startsWith('http://') || category.imageUrl.startsWith('https://')) {
-          displayImage = category.imageUrl;
-        } else {
-          let path = category.imageUrl.replace(/\\/g, '/'); // Convert backslashes to forward slashes
-          if (path.startsWith('/')) {
-            path = path.substring(1); // Remove leading slash if present
-          }
-          displayImage = `${API_HOST}/${path}`;
-        }
-      }
+      let displayImage = `${process.env.NEXT_PUBLIC_API_URL}${category.image?.url}` || placeholderImage;
 
       return (
         <Image 
