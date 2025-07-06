@@ -1,4 +1,3 @@
-
 "use client";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Category } from "@/types/ecommerce";
@@ -39,25 +38,39 @@ export const CategoryColumns = ({ onDeleteRequested }: CategoryColumnsProps): Co
     enableHiding: false,
   },
   {
-    accessorKey: "imageUrl",
+    accessorKey: "image",
     header: "Image",
     cell: ({ row }) => {
-      const imageUrl = row.getValue("imageUrl") as string | undefined;
+      const category = row.original;
       const placeholderImage = "https://placehold.co/60x60.png";
       let displayImage = placeholderImage;
 
-      if (imageUrl) {
-        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-          displayImage = imageUrl;
+      // Priority: uploaded image > imageUrl > placeholder
+      if (category.image?.url) {
+        displayImage = category.image.url;
+      } else if (category.imageUrl) {
+        if (category.imageUrl.startsWith('http://') || category.imageUrl.startsWith('https://')) {
+          displayImage = category.imageUrl;
         } else {
-          let path = imageUrl.replace(/\\/g, '/'); // Convert backslashes to forward slashes
+          let path = category.imageUrl.replace(/\\/g, '/'); // Convert backslashes to forward slashes
           if (path.startsWith('/')) {
             path = path.substring(1); // Remove leading slash if present
           }
           displayImage = `${API_HOST}/${path}`;
         }
       }
-      return <Image src={displayImage} alt={row.original.name} width={60} height={60} className="rounded-md object-cover" data-ai-hint="category visual" onError={(event) => (event.currentTarget.src = placeholderImage)} />;
+
+      return (
+        <Image 
+          src={displayImage} 
+          alt={category.name} 
+          width={60} 
+          height={60} 
+          className="rounded-md object-cover" 
+          data-ai-hint="category visual" 
+          onError={(event) => (event.currentTarget.src = placeholderImage)} 
+        />
+      );
     },
   },
   {

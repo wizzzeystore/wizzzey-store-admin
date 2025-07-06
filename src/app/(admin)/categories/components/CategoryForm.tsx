@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Category } from "@/types/ecommerce";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { createCategory, updateCategory, getCategories as fetchParentCategories } from "@/lib/apiService";
 import React, { useEffect, useState } from "react";
+import { Loader2, Upload, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 const categorySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -37,7 +39,11 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [parentCategories, setParentCategories] = useState<Category[]>([]);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -58,6 +64,52 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
       displayOrder: 0,
     },
   });
+
+  // File validation function
+  const validateImageFile = (file: File): string | null => {
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      return 'Only PNG and JPEG images are allowed';
+    }
+
+    if (file.size > maxSize) {
+      return 'File size must be less than 5MB';
+    }
+
+    return null;
+  };
+
+  // Handle image file selection
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      toast({
+        title: "Validation Error",
+        description: validationError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedImage(file);
+    const preview = URL.createObjectURL(file);
+    setImagePreview(preview);
+  };
+
+  // Remove selected image
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview("");
+    if (initialData?.image) {
+      // Mark for deletion
+      setSelectedImage(null);
+    }
+  };
 
   useEffect(() => {
     async function loadParentCategories() {
@@ -85,10 +137,31 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
 
     try {
       let response;
-      if (initialData) {
-        response = await updateCategory(initialData.id, apiValues);
+      
+      if (selectedImage) {
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('files', selectedImage);
+        
+        // Add other form data
+        Object.keys(apiValues).forEach(key => {
+          if (apiValues[key] !== undefined && apiValues[key] !== null) {
+            formData.append(key, apiValues[key]);
+          }
+        });
+
+        if (initialData) {
+          response = await updateCategory(initialData.id, formData);
+        } else {
+          response = await createCategory(formData);
+        }
       } else {
-        response = await createCategory(apiValues as Omit<Category, 'id' | 'createdAt' | 'updatedAt'>);
+        // No file upload, use regular JSON
+        if (initialData) {
+          response = await updateCategory(initialData.id, apiValues);
+        } else {
+          response = await createCategory(apiValues as Omit<Category, 'id' | 'createdAt' | 'updatedAt'>);
+        }
       }
 
       if (response.type === "OK") {
@@ -147,17 +220,83 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL (Optional)</FormLabel>
-              <FormControl><Input type="url" placeholder="https://example.com/image.png" {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
+        
+        {/* Category Image Upload Section */}
+        <div className="space-y-4">
+          <FormLabel>Category Image</FormLabel>
+          <Alert>
+            <AlertDescription>
+              <strong>Upload Requirements:</strong>
+              <ul className="mt-2 list-disc list-inside space-y-1">
+                <li>Only PNG and JPEG images are allowed</li>
+                <li>Maximum file size: 5MB</li>
+                <li>Recommended dimensions: 300x200px or similar aspect ratio</li>
+                <li>PNG format recommended for transparency</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+
+          {/* Current Image Display */}
+          {(initialData?.image || imagePreview) && (
+            <div className="space-y-4">
+              <div className="relative inline-block">
+                <Image
+                  src={imagePreview || initialData?.image?.url || ""}
+                  alt="Category Image"
+                  width={300}
+                  height={200}
+                  className="rounded-md border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute -top-2 -right-2"
+                  onClick={handleRemoveImage}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              {initialData?.image && !imagePreview && (
+                <div className="text-sm text-muted-foreground">
+                  <p>Current image: {initialData.image.originalName}</p>
+                  <p>Size: {(initialData.image.size / 1024).toFixed(1)} KB</p>
+                </div>
+              )}
+            </div>
           )}
-        />
+
+          {/* Upload Area */}
+          {!imagePreview && !initialData?.image && (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-600">No image uploaded</p>
+            </div>
+          )}
+
+          {/* File Input */}
+          <div className="flex items-center space-x-4">
+            <Input
+              type="file"
+              accept="image/png,image/jpeg,image/jpg"
+              onChange={handleImageChange}
+              disabled={isUploading}
+              className="flex-1"
+            />
+            {isUploading && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>Uploading...</span>
+              </div>
+            )}
+          </div>
+        </div>
+
          <FormField
           control={form.control}
           name="slug"

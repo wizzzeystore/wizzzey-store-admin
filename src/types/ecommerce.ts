@@ -1,8 +1,8 @@
-
 // Based on OpenAPI specification components.schemas
 
 export interface User {
-  _id: string; // uuid
+  _id?: string; // uuid
+  id?: string; // uuid (for backward compatibility)
   name: string;
   email: string; // email
   role: 'Admin' | 'User';
@@ -25,7 +25,8 @@ export interface Product {
   price: number;
   categoryId: string; // uuid
   brandId?: string; // uuid
-  imageUrl: string; // uri
+  imageUrl?: string; // uri
+  images?: string[]; // array of image URLs
   inStock: boolean;
   sku?: string;
   compareAtPrice?: number;
@@ -53,6 +54,13 @@ export interface Category {
   description?: string;
   parentId?: string | null; // uuid
   imageUrl?: string; // uri
+  image?: {
+    filename: string;
+    originalName: string;
+    mimetype: string;
+    size: number;
+    url: string;
+  };
   slug?: string;
   icon?: string;
   isActive?: boolean;
@@ -124,28 +132,38 @@ export interface Inventory {
 }
 
 export interface AppSettings {
-  id: string; // uuid
-  siteName: string;
-  siteDescription: string;
-  contactEmail: string; // email
-  siteHeroImage?: {
-    name: string; // e.g., "hero-image.jpg"
-    type: string; // e.g., "image/jpeg"
-    size: number; // in bytes
-    uri: string; // e.g., "https://example.com/images/hero-image.jpg"
+  _id?: string; // MongoDB ObjectId
+  storeName: string;
+  defaultStoreEmail: string;
+  maintenanceMode: boolean;
+  darkMode: boolean;
+  themeAccentColor: string;
+  storeLogoUrl: string;
+  storeLogo?: {
+    filename: string;
+    originalName: string;
+    mimetype: string;
+    size: number;
+    url: string;
   };
-  contactPhone?: string;
-  socialLinks?: {
-    facebook?: string; // uri
-    twitter?: string; // uri
-    instagram?: string; // uri
+  heroImage?: {
+    filename: string;
+    originalName: string;
+    mimetype: string;
+    size: number;
+    url: string;
   };
-  themeSettings?: {
-    primaryColor?: string;
-    secondaryColor?: string;
-    fontFamily?: string;
+  notifications: {
+    newOrderEmails: boolean;
+    lowStockAlerts: boolean;
+    productUpdatesNewsletter: boolean;
   };
-  updatedAt?: string; // date-time
+  apiSettings: {
+    apiKey?: string;
+    apiKeyLastGenerated?: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ActivityLog {
@@ -245,9 +263,7 @@ export interface ApiResponse<T = any> {
 
 export interface PaginatedResponse<TData = any, TKey extends string = string> extends ApiResponse {
   data?: {
-    [key in TKey]?: TData[]; // e.g., products: Product[]
-  } & { // Allow for single item responses as well, e.g. data.product
-    [key as Exclude<TKey, `${TKey}s`>]?: TData;
+    [K in TKey]?: TData[]; // e.g., products: Product[]
   };
   pagination?: {
     total: number;

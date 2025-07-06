@@ -414,17 +414,18 @@ export const getActivityLogs = async (page = 1, limit = 10, filters = {}): Promi
 
 
 export const getAppSettings = async (): Promise<ApiResponse<AppSettings>> => {
-  const response = await fetchApi<ApiResponse<AppSettings>>('app-settings');
+  const response = await fetchApi<ApiResponse<{ settings: AppSettings }>>('app-settings');
   if (response.type === 'ERROR') {
     console.error('Failed to fetch app settings:', response.message);
     return { type: 'ERROR', message: response.message, data: null };
   }
-  const data = response.data.settings[0] ;
+  const data = response.data?.settings || undefined;
   return { type: 'OK', data, message: 'App settings fetched successfully' };
 };
+
 export const updateAppSettings = async (settingsData: Partial<AppSettings>): Promise<ApiResponse<AppSettings>> => {
   console.log("Log: Updating app settings with data:", settingsData);
-  const response = await fetchApi<ApiResponse<AppSettings>>(`app-settings/${settingsData._id}`, {
+  const response = await fetchApi<ApiResponse<{ settings: AppSettings }>>('app-settings', {
     method: 'PUT',
     body: JSON.stringify(settingsData),
   });
@@ -432,7 +433,73 @@ export const updateAppSettings = async (settingsData: Partial<AppSettings>): Pro
     console.error('Failed to update app settings:', response.message);
     return { type: 'ERROR', message: response.message, data: null };
   }
-  return { type: 'OK', data: response.data.settings[0], message: 'App settings updated successfully' };
+  return { type: 'OK', data: response.data?.settings, message: 'App settings updated successfully' };
+};
+
+export const generateApiKey = async (): Promise<ApiResponse<{ apiKey: string }>> => {
+  const response = await fetchApi<ApiResponse<{ apiKey: string }>>('app-settings/generate-api-key', {
+    method: 'POST',
+  });
+  if (response.type === 'ERROR') {
+    console.error('Failed to generate API key:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', data: response.data, message: 'API key generated successfully' };
+};
+
+// File upload functions for app settings
+export const uploadStoreLogo = async (file: File): Promise<ApiResponse<{ storeLogo: any }>> => {
+  const formData = new FormData();
+  formData.append('logo', file);
+  
+  const response = await fetchApi<ApiResponse<{ storeLogo: any }>>('app-settings/upload/logo', {
+    method: 'POST',
+    body: formData,
+  }, true);
+  
+  if (response.type === 'ERROR') {
+    console.error('Failed to upload store logo:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', data: response.data, message: 'Store logo uploaded successfully' };
+};
+
+export const uploadHeroImage = async (file: File): Promise<ApiResponse<{ heroImage: any }>> => {
+  const formData = new FormData();
+  formData.append('hero', file);
+  
+  const response = await fetchApi<ApiResponse<{ heroImage: any }>>('app-settings/upload/hero', {
+    method: 'POST',
+    body: formData,
+  }, true);
+  
+  if (response.type === 'ERROR') {
+    console.error('Failed to upload hero image:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', data: response.data, message: 'Hero image uploaded successfully' };
+};
+
+export const deleteStoreLogo = async (): Promise<ApiResponse> => {
+  const response = await fetchApi<ApiResponse>('app-settings/logo', {
+    method: 'DELETE',
+  });
+  if (response.type === 'ERROR') {
+    console.error('Failed to delete store logo:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', message: 'Store logo deleted successfully' };
+};
+
+export const deleteHeroImage = async (): Promise<ApiResponse> => {
+  const response = await fetchApi<ApiResponse>('app-settings/hero', {
+    method: 'DELETE',
+  });
+  if (response.type === 'ERROR') {
+    console.error('Failed to delete hero image:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', message: 'Hero image deleted successfully' };
 };
 
 // --- DASHBOARD STATS ---

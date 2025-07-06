@@ -6,10 +6,70 @@ export const MOCK_USERS: User[] = [
 ];
 
 export const MOCK_CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Electronics', description: 'Gadgets and devices', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'electronics circuit', createdAt: new Date().toISOString(), parentId: null },
-  { id: 'cat-2', name: 'Books', description: 'Read all about it', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'books library', createdAt: new Date().toISOString(), parentId: null },
-  { id: 'cat-3', name: 'Smartphones', description: 'Latest mobile phones', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'smartphone mobile', createdAt: new Date().toISOString(), parentId: 'cat-1' },
-  { id: 'cat-4', name: 'Laptops', description: 'Powerful computing on the go', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'laptop computer', createdAt: new Date().toISOString(), parentId: 'cat-1' },
+  { 
+    id: 'cat-1', 
+    name: 'Electronics', 
+    description: 'Gadgets and devices', 
+    imageUrl: 'https://placehold.co/300x200.png', 
+    image: {
+      filename: 'electronics-1234567890.png',
+      originalName: 'electronics-category.png',
+      mimetype: 'image/png',
+      size: 51200,
+      url: 'https://placehold.co/300x200.png'
+    },
+    dataAiHint: 'electronics circuit', 
+    createdAt: new Date().toISOString(), 
+    parentId: null 
+  },
+  { 
+    id: 'cat-2', 
+    name: 'Books', 
+    description: 'Read all about it', 
+    imageUrl: 'https://placehold.co/300x200.png', 
+    image: {
+      filename: 'books-1234567890.png',
+      originalName: 'books-category.png',
+      mimetype: 'image/png',
+      size: 45600,
+      url: 'https://placehold.co/300x200.png'
+    },
+    dataAiHint: 'books library', 
+    createdAt: new Date().toISOString(), 
+    parentId: null 
+  },
+  { 
+    id: 'cat-3', 
+    name: 'Smartphones', 
+    description: 'Latest mobile phones', 
+    imageUrl: 'https://placehold.co/300x200.png', 
+    image: {
+      filename: 'smartphones-1234567890.png',
+      originalName: 'smartphones-category.png',
+      mimetype: 'image/png',
+      size: 67800,
+      url: 'https://placehold.co/300x200.png'
+    },
+    dataAiHint: 'smartphone mobile', 
+    createdAt: new Date().toISOString(), 
+    parentId: 'cat-1' 
+  },
+  { 
+    id: 'cat-4', 
+    name: 'Laptops', 
+    description: 'Powerful computing on the go', 
+    imageUrl: 'https://placehold.co/300x200.png', 
+    image: {
+      filename: 'laptops-1234567890.png',
+      originalName: 'laptops-category.png',
+      mimetype: 'image/png',
+      size: 72300,
+      url: 'https://placehold.co/300x200.png'
+    },
+    dataAiHint: 'laptop computer', 
+    createdAt: new Date().toISOString(), 
+    parentId: 'cat-1' 
+  },
 ];
 
 export const MOCK_BRANDS: Brand[] = [
@@ -82,13 +142,36 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
 ];
 
 export let MOCK_APP_SETTINGS: AppSettings = {
-    id: 'settings-1',
-    siteName: 'Wizzzey',
-    siteDescription: 'Your one-stop e-commerce solution.',
-    contactEmail: 'support@wizzzey.com',
-    contactPhone: '1-800-555-WIZZ',
-    socialLinks: { facebook: 'https://facebook.com/wizzzey', twitter: 'https://twitter.com/wizzzey' },
-    themeSettings: { primaryColor: '#4B0082', secondaryColor: '#9ACD32', fontFamily: 'Inter' },
+    _id: 'settings-1',
+    storeName: 'Wizzzey',
+    defaultStoreEmail: 'support@wizzzey.com',
+    maintenanceMode: false,
+    darkMode: false,
+    themeAccentColor: '#4B0082',
+    storeLogoUrl: 'https://placehold.co/200x100.png',
+    storeLogo: {
+        filename: 'logo-1234567890.png',
+        originalName: 'wizzzey-logo.png',
+        mimetype: 'image/png',
+        size: 51200,
+        url: 'https://placehold.co/200x100.png'
+    },
+    heroImage: {
+        filename: 'hero-1234567890.jpg',
+        originalName: 'hero-banner.jpg',
+        mimetype: 'image/jpeg',
+        size: 204800,
+        url: 'https://placehold.co/1200x600.png'
+    },
+    notifications: {
+        newOrderEmails: true,
+        lowStockAlerts: true,
+        productUpdatesNewsletter: false,
+    },
+    apiSettings: {
+        apiKey: 'mock-api-key-123456789',
+        apiKeyLastGenerated: new Date().toISOString(),
+    },
+    createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    siteHeroImage: { name: 'hero-image.jpg', type: 'image/jpeg', size: 204800, uri: 'https://placehold.co/1200x600.png' }, // Mock file object
 };
