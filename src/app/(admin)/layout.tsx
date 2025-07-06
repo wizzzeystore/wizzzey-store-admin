@@ -25,7 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { canAccessOrders, canAccessUsers, canAccessProducts, canAccessInventory, canAccessBrands, canAccessAnalytics } from '@/lib/permissions';
 import {
   LayoutDashboard, ShoppingBag, Users, Settings, ListOrdered, Activity, BarChart3,
-  Users2, ShoppingCart, PercentSquare, Newspaper, MessageSquareQuote, Briefcase, Palette, HardDrive, Warehouse
+  Users2, ShoppingCart, PercentSquare, Newspaper, MessageSquareQuote, Briefcase, Palette, HardDrive, Warehouse, Trash2
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -78,6 +78,7 @@ const getNavItems = (user: any): NavItem[] => {
   }
 
   items.push({ href: '/activity-logs', label: 'Activity Logs', icon: Activity });
+  items.push({ href: '/cleanup', label: 'File Cleanup', icon: Trash2 });
   items.push({ href: '/settings', label: 'Settings', icon: Settings });
 
   return items;

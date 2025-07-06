@@ -12,6 +12,7 @@ import type { ActivityLog, DashboardStatsData } from '@/types/ecommerce';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import CleanupStatusWidget from '@/components/CleanupStatusWidget';
 
 interface StatCardProps {
   title: string;
@@ -175,30 +176,34 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg h-full">
-          <CardHeader>
-            <CardTitle>Top Selling Products</CardTitle>
-             <CardDescription>
-                <Link href="/products?sort=top-selling" className="text-sm text-primary hover:underline">View all products &rarr;</Link>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingStats ? (
-                 <div className="space-y-3"> {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)} </div>
-            ) : formattedTopProducts.length > 0 ? (
-              <ul className="space-y-3">
-                {formattedTopProducts.slice(0, 5).map((product) => (
-                  <li key={product.name} className="flex justify-between items-center p-2 rounded-md hover:bg-muted">
-                    <span className="text-sm font-medium">{product.name}</span>
-                    <span className="text-sm text-primary font-semibold">{product.sales} units</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-               <div className="flex items-center justify-center h-full text-muted-foreground">No product data available.</div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-8">
+          <Card className="shadow-lg h-full">
+            <CardHeader>
+              <CardTitle>Top Selling Products</CardTitle>
+               <CardDescription>
+                  <Link href="/products?sort=top-selling" className="text-sm text-primary hover:underline">View all products &rarr;</Link>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingStats ? (
+                   <div className="space-y-3"> {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)} </div>
+              ) : formattedTopProducts.length > 0 ? (
+                <ul className="space-y-3">
+                  {formattedTopProducts.slice(0, 5).map((product) => (
+                    <li key={product.name} className="flex justify-between items-center p-2 rounded-md hover:bg-muted">
+                      <span className="text-sm font-medium">{product.name}</span>
+                      <span className="text-sm text-primary font-semibold">{product.sales} units</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                 <div className="flex items-center justify-center h-full text-muted-foreground">No product data available.</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <CleanupStatusWidget />
+        </div>
       </div>
       
       <Card className="mt-8 shadow-lg">

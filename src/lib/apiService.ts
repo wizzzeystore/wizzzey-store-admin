@@ -714,3 +714,76 @@ export const syncPlatformData = async (platform: string, items: any[]): Promise<
     body: JSON.stringify({ items }),
   });
 };
+
+// Cleanup API functions
+export const getCleanupStatus = async (): Promise<ApiResponse<{
+  isRunning: boolean;
+  schedulerActive: boolean;
+  lastRun: string | null;
+  nextScheduledRun: string;
+  uploadsDirectory: string;
+}>> => {
+  return fetchApi<ApiResponse<{
+    isRunning: boolean;
+    schedulerActive: boolean;
+    lastRun: string | null;
+    nextScheduledRun: string;
+    uploadsDirectory: string;
+  }>>('cleanup/status');
+};
+
+export const getOrphanedFilesPreview = async (): Promise<ApiResponse<{
+  totalFilesInUploads: number;
+  referencedFiles: number;
+  orphanedFiles: number;
+  orphanedFileList: string[];
+  estimatedSpaceSaved: string;
+  timestamp: string;
+}>> => {
+  return fetchApi<ApiResponse<{
+    totalFilesInUploads: number;
+    referencedFiles: number;
+    orphanedFiles: number;
+    orphanedFileList: string[];
+    estimatedSpaceSaved: string;
+    timestamp: string;
+  }>>('cleanup/preview');
+};
+
+export const triggerManualCleanup = async (): Promise<ApiResponse<{
+  message: string;
+  timestamp: string;
+}>> => {
+  return fetchApi<ApiResponse<{
+    message: string;
+    timestamp: string;
+  }>>('cleanup/trigger', {
+    method: 'POST',
+  });
+};
+
+export const startCleanupScheduler = async (): Promise<ApiResponse<{
+  message: string;
+  nextRun: string;
+  timestamp: string;
+}>> => {
+  return fetchApi<ApiResponse<{
+    message: string;
+    nextRun: string;
+    timestamp: string;
+  }>>('cleanup/scheduler/start', {
+    method: 'POST',
+  });
+};
+
+export const stopCleanupScheduler = async (): Promise<ApiResponse<{
+  message: string;
+  timestamp: string;
+}>> => {
+  return fetchApi<ApiResponse<{
+    message: string;
+    timestamp: string;
+  }>>('cleanup/scheduler/stop', {
+    method: 'POST',
+  });
+};
