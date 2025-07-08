@@ -3,9 +3,12 @@ export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | '
 export interface OrderItem {
   productId: string;
   productName: string;
+  productImage: string;
   quantity: number;
   price: number;
+  brandId?: string;
   selectedSize?: string;
+  selectedColor?: string;
 }
 
 export interface CustomerInfo {

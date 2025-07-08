@@ -224,6 +224,49 @@ export function OrdersTable() {
         </Table>
       </div>
 
+      {/* Order Items Table (Product Details) */}
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">Order Items</h3>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead>Size</TableHead>
+              <TableHead>Color</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Price</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.data.orders.map((order: Order) => (
+              order.items.map((item, idx) => (
+                <TableRow key={order.id + '-' + item.productId + '-' + idx}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <img src={item.productImage || 'https://placehold.co/60x60.png'} alt={item.productName} className="w-10 h-10 object-cover rounded" />
+                      <a
+                        href={`${process.env.NEXT_PUBLIC_STORE_URL}/shop/product/${item.productId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-sm font-medium"
+                      >
+                        {item.productName}
+                      </a>
+                    </div>
+                  </TableCell>
+                  <TableCell>{item.sku || '-'}</TableCell>
+                  <TableCell>{item.selectedSize || '-'}</TableCell>
+                  <TableCell>{item.selectedColor || '-'}</TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>{formatCurrency(item.price)}</TableCell>
+                </TableRow>
+              ))
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
       {data && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">

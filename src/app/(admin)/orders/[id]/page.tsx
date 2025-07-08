@@ -28,6 +28,8 @@ const statusColors: Record<OrderStatus, string> = {
   Refunded: 'bg-gray-100 text-gray-800',
 };
 
+const STORE_URL = process.env.NEXT_PUBLIC_STORE_URL || '';
+
 export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data, isLoading, error, refetch } = useOrder(id as string);
@@ -270,30 +272,43 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           <CardTitle>Order Items</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="divide-y">
-            {order.items.map((item, index) => (
-              <div
-                key={`${item.productId}-${index}`}
-                className="flex items-center justify-between py-4"
-              >
-                <div className="space-y-1">
-                  <div className="font-medium">{item.productName}</div>
-                  {item.selectedSize && (
-                    <div className="text-sm text-muted-foreground">
-                      Size: {item.selectedSize}
-                    </div>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className="font-medium">
-                    {formatCurrency(item.price * item.quantity)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {item.quantity} × {formatCurrency(item.price)}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left">Product</th>
+                  <th className="px-4 py-2 text-left">SKU</th>
+                  <th className="px-4 py-2 text-left">Size</th>
+                  <th className="px-4 py-2 text-left">Color</th>
+                  <th className="px-4 py-2 text-left">Quantity</th>
+                  <th className="px-4 py-2 text-left">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.items.map((item, index) => (
+                  <tr key={`${item.productId}-${index}`} className="border-b">
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <img src={item.productImage || 'https://placehold.co/60x60.png'} alt={item.productName} className="w-10 h-10 object-cover rounded" />
+                        <a
+                          href={`${STORE_URL}/shop/product/${item.productId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm font-medium"
+                        >
+                          {item.productName}
+                        </a>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">{item.sku || '-'}</td>
+                    <td className="px-4 py-2">{item.selectedSize || '-'}</td>
+                    <td className="px-4 py-2">{item.selectedColor || '-'}</td>
+                    <td className="px-4 py-2">{item.quantity}</td>
+                    <td className="px-4 py-2">{formatCurrency(item.price)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <div className="mt-4 border-t pt-4">
             <div className="flex justify-between font-medium">
