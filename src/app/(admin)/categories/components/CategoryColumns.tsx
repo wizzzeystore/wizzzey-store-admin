@@ -43,7 +43,7 @@ export const CategoryColumns = ({ onDeleteRequested }: CategoryColumnsProps): Co
     cell: ({ row }) => {
       const category = row.original;
       const placeholderImage = "https://placehold.co/60x60.png";
-      let displayImage = `${process.env.NEXT_PUBLIC_API_URL}${category.image?.url}` || placeholderImage;
+      let displayImage = category.image?.url ? `${process.env.NEXT_PUBLIC_API_URL}${category.image?.url}` : placeholderImage;
 
       return (
         <Image 
