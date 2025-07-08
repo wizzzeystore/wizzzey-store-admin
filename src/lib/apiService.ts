@@ -787,3 +787,19 @@ export const stopCleanupScheduler = async (): Promise<ApiResponse<{
     method: 'POST',
   });
 };
+
+// Return/Exchange API functions
+export const fetchOrderReturns = async (orderId: string) => {
+  const response = await fetchApi<ApiResponse<{ returns: any[] }>>(`orders/${orderId}/returns`);
+  if (response.type === 'ERROR') throw new Error(response.message || 'Failed to fetch returns');
+  return response.data?.returns || [];
+};
+
+export const updateOrderReturnRequest = async (orderId: string, returnId: string, data: { status?: string; adminNotes?: string }) => {
+  const response = await fetchApi<ApiResponse<{ return: any }>>(`orders/${orderId}/returns/${returnId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (response.type === 'ERROR') throw new Error(response.message || 'Failed to update return request');
+  return response.data?.return;
+};

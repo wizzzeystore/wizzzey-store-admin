@@ -11,13 +11,13 @@ import { OrderStatus } from '@/types/order';
 import BackButton from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateOrder, deleteOrder } from '@/lib/apiService';
+import { updateOrder, deleteOrder, fetchOrderReturns, updateOrderReturnRequest } from '@/lib/apiService';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const statusColors: Record<OrderStatus, string> = {
   Pending: 'bg-yellow-100 text-yellow-800',
@@ -38,12 +38,23 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
   // Edit dialog state
   const [editOpen, setEditOpen] = useState(false);
-  const [editStatus, setEditStatus] = useState<string>('');
+  const [editStatus, setEditStatus] = useState<OrderStatus | ''>('');
   const [editNotes, setEditNotes] = useState<string>('');
   // Delete dialog state
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [updating, setUpdating] = useState(false);
+  // Returns/Exchanges state
+  const [returns, setReturns] = useState<any[]>([]);
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [selectedReturn, setSelectedReturn] = useState<any>(null);
+  const [adminStatus, setAdminStatus] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
+  const [updatingReturn, setUpdatingReturn] = useState(false);
+
+  useEffect(() => {
+    fetchOrderReturns(id).then(setReturns).catch(() => setReturns([]));
+  }, [id]);
 
   if (error) {
     return (
@@ -87,13 +98,13 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
   // Handlers
   const handleEditOpen = () => {
-    setEditStatus(order.status);
+    setEditStatus(order.status as OrderStatus);
     setEditNotes(order.notes || '');
     setEditOpen(true);
   };
   const handleEditSave = async () => {
     setUpdating(true);
-    const res = await updateOrder(order.id, { status: editStatus, notes: editNotes });
+    const res = await updateOrder(order.id, { status: editStatus as OrderStatus, notes: editNotes });
     setUpdating(false);
     if (res.type === 'OK') {
       toast({ title: 'Order updated', description: 'Order updated successfully.' });
@@ -113,6 +124,29 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
       router.push('/orders');
     } else {
       toast({ title: 'Error', description: res.message || 'Failed to delete order.', variant: 'destructive' });
+    }
+  };
+
+  const handleOpenReturnDialog = (ret: any) => {
+    setSelectedReturn(ret);
+    setAdminStatus(ret.status);
+    setAdminNotes(ret.adminNotes || '');
+    setReturnDialogOpen(true);
+  };
+
+  const handleUpdateReturn = async () => {
+    setUpdatingReturn(true);
+    try {
+      await updateOrderReturnRequest(order.id, selectedReturn._id, { status: adminStatus, adminNotes });
+      setReturnDialogOpen(false);
+      // Refresh returns
+      const updated = await fetchOrderReturns(order.id);
+      setReturns(updated);
+      toast({ title: 'Return/Exchange updated' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to update return/exchange', variant: 'destructive' });
+    } finally {
+      setUpdatingReturn(false);
     }
   };
 
@@ -174,7 +208,9 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={updating}>Cancel</Button>
-            <Button onClick={handleEditSave} loading={updating}>Save</Button>
+            <Button onClick={handleEditSave} disabled={updating}>
+              {updating ? 'Saving...' : 'Save'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -188,7 +224,9 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           <p>Are you sure you want to delete this order? This action cannot be undone.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} loading={deleting}>Delete</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -318,6 +356,97 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           </div>
         </CardContent>
       </Card>
+
+      {/* Returns/Exchanges Section */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Returns / Exchanges</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {returns.length === 0 ? (
+            <div className="text-muted-foreground">No return or exchange requests for this order.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-border">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left">Item</th>
+                    <th className="px-4 py-2 text-left">Type</th>
+                    <th className="px-4 py-2 text-left">Reason</th>
+                    <th className="px-4 py-2 text-left">Status</th>
+                    <th className="px-4 py-2 text-left">Requested At</th>
+                    <th className="px-4 py-2 text-left">Quantity</th>
+                    <th className="px-4 py-2 text-left">Exchange For</th>
+                    <th className="px-4 py-2 text-left">Admin Notes</th>
+                    <th className="px-4 py-2 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {returns.map((ret, idx) => {
+                    const item = order.items.find(i => i.productId === ret.itemId);
+                    return (
+                      <tr key={ret._id || idx} className="border-b">
+                        <td className="px-4 py-2">
+                          {item ? (
+                            <div className="flex items-center gap-2">
+                              <img src={item.productImage || 'https://placehold.co/60x60.png'} alt={item.productName} className="w-10 h-10 object-cover rounded" />
+                              <span>{item.productName}</span>
+                              {item.sku && (
+                                <span className="ml-2 text-xs text-muted-foreground">SKU: {item.sku}</span>
+                              )}
+                            </div>
+                          ) : ret.itemId}
+                        </td>
+                        <td className="px-4 py-2">{ret.type}</td>
+                        <td className="px-4 py-2">{ret.reason}</td>
+                        <td className="px-4 py-2">{ret.status}</td>
+                        <td className="px-4 py-2">{ret.requestedAt ? new Date(ret.requestedAt).toLocaleString() : '-'}</td>
+                        <td className="px-4 py-2">{ret.quantity}</td>
+                        <td className="px-4 py-2">{ret.type === 'exchange' ? `${ret.exchangeForSize || ''} ${ret.exchangeForColor || ''}` : '-'}</td>
+                        <td className="px-4 py-2">{ret.adminNotes || '-'}</td>
+                        <td className="px-4 py-2">
+                          <Button size="sm" variant="outline" onClick={() => handleOpenReturnDialog(ret)}>
+                            Update
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Return/Exchange Update Dialog */}
+      <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Return/Exchange</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Select value={adminStatus} onValueChange={setAdminStatus}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="requested">Requested</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} placeholder="Admin notes (optional)" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReturnDialogOpen(false)} disabled={updatingReturn}>Cancel</Button>
+            <Button onClick={handleUpdateReturn} disabled={updatingReturn}>
+              {updatingReturn ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
