@@ -80,6 +80,10 @@ export default function ProductForm({ initialData }: ProductFormProps) {
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
+  // Existing images (from initialData.media)
+  const [existingImages, setExistingImages] = useState<{ url: string; type: "image" | "video"; alt?: string }[]>(initialData?.media?.filter(m => m.type === "image") || []);
+  const [deletedImages, setDeletedImages] = useState<string[]>([]); // store URLs of images marked for deletion
+
   // Dynamic fields
   const [sizes, setSizes] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -177,6 +181,12 @@ export default function ProductForm({ initialData }: ProductFormProps) {
     setNewImageFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Remove an existing image
+  const handleRemoveExistingImage = (url: string) => {
+    setDeletedImages(prev => [...prev, url]);
+    setExistingImages(prev => prev.filter(img => img.url !== url));
+  };
+
   // Dynamic field handlers (same as before)
   const addSize = () => setSizes([...sizes, ""]);
   const updateSize = (i: number, value: string) => setSizes(sizes.map((s, idx) => (idx === i ? value : s)));
@@ -223,14 +233,73 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       if (values.ratings) formData.append("ratings", JSON.stringify(values.ratings));
       if (values.barcode) formData.append("barcode", values.barcode);
       if (media.length > 0) media.forEach(m => formData.append("media", JSON.stringify(m)));
+      // Add deletedImages if any
+      if (deletedImages.length > 0) {
+        formData.append("deletedImages", JSON.stringify(deletedImages));
+      }
       // API call
       let response;
-      console.log("values", values);
       if (initialData) {
-        console.log("initialData", initialData);
-        response = await updateProduct(initialData.id, values);
+        if (newImageFiles.length > 0) {
+          // If new images are being uploaded, use FormData for update
+          const updateFormData = new FormData();
+          updateFormData.append("name", values.name);
+          updateFormData.append("description", values.description);
+          updateFormData.append("price", String(values.price));
+          updateFormData.append("sku", values.sku);
+          updateFormData.append("categoryId", values.categoryId);
+          newImageFiles.forEach(file => updateFormData.append("files", file));
+          if (values.brandId) updateFormData.append("brandId", values.brandId);
+          if (values.compareAtPrice !== undefined) updateFormData.append("compareAtPrice", String(values.compareAtPrice));
+          if (values.costPrice !== undefined) updateFormData.append("costPrice", String(values.costPrice));
+          if (values.stock !== undefined) updateFormData.append("stock", String(values.stock));
+          if (values.lowStockThreshold !== undefined) updateFormData.append("lowStockThreshold", String(values.lowStockThreshold));
+          if (sizes.length > 0) sizes.forEach(size => updateFormData.append("availableSizes", size));
+          if (colors.length > 0) colors.forEach(color => updateFormData.append("colors", JSON.stringify(color)));
+          if (values.weight) updateFormData.append("weight", JSON.stringify(values.weight));
+          if (values.dimensions) updateFormData.append("dimensions", JSON.stringify(values.dimensions));
+          if (tags.length > 0) tags.forEach(tag => updateFormData.append("tags", tag));
+          if (values.status) updateFormData.append("status", values.status);
+          if (values.isFeatured !== undefined) updateFormData.append("isFeatured", String(values.isFeatured));
+          if (values.seo) updateFormData.append("seo", JSON.stringify({ ...values.seo, keywords: seoKeywords }));
+          if (values.ratings) updateFormData.append("ratings", JSON.stringify(values.ratings));
+          if (values.barcode) updateFormData.append("barcode", values.barcode);
+          if (media.length > 0) media.forEach(m => updateFormData.append("media", JSON.stringify(m)));
+          if (deletedImages.length > 0) updateFormData.append("deletedImages", JSON.stringify(deletedImages));
+          response = await updateProduct(initialData.id, updateFormData);
+        } else {
+          // No new images, use JSON
+          const updatePayload: any = {
+            name: values.name,
+            description: values.description,
+            price: values.price,
+            sku: values.sku,
+            categoryId: values.categoryId,
+            stock: values.stock,
+            status: values.status,
+            isFeatured: values.isFeatured,
+            compareAtPrice: values.compareAtPrice,
+            costPrice: values.costPrice,
+            lowStockThreshold: values.lowStockThreshold,
+            availableSizes: sizes,
+            colors: colors,
+            tags: tags,
+            barcode: values.barcode,
+            seo: values.seo ? { ...values.seo, keywords: seoKeywords } : undefined,
+            ratings: values.ratings,
+            brandId: values.brandId,
+            media: media,
+            deletedImages: deletedImages,
+          };
+          if (values.weight && typeof values.weight.value === 'number' && values.weight.unit) {
+            updatePayload.weight = { value: values.weight.value, unit: values.weight.unit };
+          }
+          if (values.dimensions && typeof values.dimensions.length === 'number' && typeof values.dimensions.width === 'number' && typeof values.dimensions.height === 'number' && values.dimensions.unit) {
+            updatePayload.dimensions = { length: values.dimensions.length, width: values.dimensions.width, height: values.dimensions.height, unit: values.dimensions.unit };
+          }
+          response = await updateProduct(initialData.id, updatePayload);
+        }
       } else {
-        console.log("creating product");
         response = await createProduct(formData);
       }
       if (response.type === "OK") {
@@ -323,6 +392,27 @@ export default function ProductForm({ initialData }: ProductFormProps) {
                   />
                 </FormControl>
                 <FormDescription>Select one or more images for the product (at least one required).</FormDescription>
+                {/* Existing images */}
+                {existingImages.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    {existingImages.map((img, index) => (
+                      <div key={`existing-${index}`} className="relative group aspect-square">
+                        <Image src={`${process.env.NEXT_PUBLIC_API_URL}/${img.url}`} alt={img.alt || `Product image ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md" />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-75 group-hover:opacity-100"
+                          onClick={() => handleRemoveExistingImage(img.url)}
+                          disabled={isLoading || isUploading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* New image previews */}
                 {imagePreviews.length > 0 && (
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                     {imagePreviews.map((previewUrl, index) => (

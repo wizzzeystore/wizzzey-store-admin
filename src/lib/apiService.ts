@@ -102,11 +102,19 @@ export const createProduct = async (productDataOrFormData: Product | FormData): 
   }
 };
 
-export const updateProduct = async (id: string, productData: Partial<Product>): Promise<ApiResponse<Product>> => {
+export const updateProduct = async (id: string, productData: Partial<Product> & { deletedImages?: string[] } | FormData): Promise<ApiResponse<Product>> => {
+  let body: BodyInit;
+  let isFormData = false;
+  if (productData instanceof FormData) {
+    body = productData;
+    isFormData = true;
+  } else {
+    body = JSON.stringify(productData);
+  }
   return fetchApi<ApiResponse<Product>>(`products?id=${id}`, {
     method: 'PUT',
-    body: JSON.stringify(productData),
-  });
+    body: body,
+  }, isFormData);
 };
 export const deleteProduct = async (id: string): Promise<ApiResponse> => {
   return fetchApi<ApiResponse>(`products?id=${id}`, {
