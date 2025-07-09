@@ -63,6 +63,8 @@ const getNavItems = (user: any): NavItem[] => {
 
   items.push({ href: '/customers', label: 'Customers', icon: Users2 });
   items.push({ href: '/discounts', label: 'Discounts', icon: PercentSquare });
+  // Add Size Charts menu item here
+  items.push({ href: '/size-charts', label: 'Size Charts', icon: ListOrdered });
 
   items.push({
     href: '/blogs', label: 'Blogs', icon: Newspaper, subItems: [
