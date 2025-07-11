@@ -115,7 +115,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       ratings: initialData.ratings,
       barcode: initialData.barcode,
       media: initialData.media || [],
-      sizeChart: typeof initialData.sizeChart === 'object' ? initialData.sizeChart._id : initialData.sizeChart,
+      sizeChart: typeof initialData.sizeChart === 'object' ? initialData.sizeChart?._id : initialData.sizeChart,
     } : {
       name: "",
       description: "",
@@ -519,8 +519,8 @@ export default function ProductForm({ initialData }: ProductFormProps) {
                       <SelectContent>
                         <SelectItem value={NONE_SIZE_CHART_VALUE}>None</SelectItem>
                         {sizeCharts.map(sizeChart => (
-                          <SelectItem key={sizeChart._id} value={sizeChart._id}>
-                            {sizeChart.title}
+                          <SelectItem key={sizeChart?._id} value={sizeChart?._id}>
+                            {sizeChart?.title}
                           </SelectItem>
                         ))}
                       </SelectContent>
