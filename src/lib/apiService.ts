@@ -5,6 +5,7 @@ import type {
   Brand,
   Inventory,
   FAQ,
+  SizeChart,
   PaginatedResponse,
   ApiResponse,
   User,
@@ -720,6 +721,24 @@ export const syncPlatformData = async (platform: string, items: any[]): Promise<
   return fetchApi<ApiResponse<{ syncedItems: HardInventoryItem[]; errors: any[] }>>(`hard-inventory/platform/${platform}/sync`, {
     method: 'POST',
     body: JSON.stringify({ items }),
+  });
+};
+
+// Size Chart API functions
+export const getSizeCharts = async (): Promise<ApiResponse<{ sizeCharts: SizeChart[] }>> => {
+  return fetchApi<ApiResponse<{ sizeCharts: SizeChart[] }>>('size-charts');
+};
+
+export const createSizeChart = async (formData: FormData): Promise<ApiResponse<SizeChart>> => {
+  return fetchApi<ApiResponse<SizeChart>>('size-charts', {
+    method: 'POST',
+    body: formData,
+  }, true);
+};
+
+export const deleteSizeChart = async (id: string): Promise<ApiResponse<void>> => {
+  return fetchApi<ApiResponse<void>>(`size-charts/${id}`, {
+    method: 'DELETE',
   });
 };
 

@@ -1,113 +1,165 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
-
-interface SizeChart {
-  _id: string;
-  title: string;
-  description?: string;
-  image: string;
-}
+import React, { useEffect, useState } from 'react';
+import PageHeader from '@/components/PageHeader';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, RefreshCw, Upload } from 'lucide-react';
+import { SizeChart } from '@/types/ecommerce';
+import { getSizeCharts, createSizeChart, deleteSizeChart } from '@/lib/apiService';
+import { SizeChartColumns } from './components/SizeChartColumns';
+import { DataTable } from '@/app/(admin)/products/components/data-table';
+import { useToast } from '@/hooks/use-toast';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
+import { SizeChartForm } from './components/SizeChartForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function SizeChartsPage() {
   const [sizeCharts, setSizeCharts] = useState<SizeChart[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10, pageCount: 1 });
+  const { toast } = useToast();
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
 
-  const fetchSizeCharts = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchData = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch("/api/size-charts", { credentials: "include" });
-      const data = await res.json();
-      setSizeCharts(data.data.sizeCharts || []);
-    } catch (err) {
-      setError("Failed to fetch size charts");
+      const response = await getSizeCharts();
+      if (response.type === 'OK' && response.data?.sizeCharts) {
+        setSizeCharts(response.data.sizeCharts);
+      } else {
+        toast({ 
+          title: "Error", 
+          description: response.message || "Failed to fetch size charts.", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "An error occurred while fetching size charts.", 
+        variant: "destructive" 
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSizeCharts();
+    fetchData();
   }, []);
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !image) return setError("Title and image are required");
-    setLoading(true);
-    setError(null);
+  const handleUpload = async (formData: FormData) => {
+    setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("image", image);
-      if (description) formData.append("description", description);
-      const res = await fetch("/api/size-charts", {
-        method: "POST",
-        body: formData,
-        credentials: "include"
+      const response = await createSizeChart(formData);
+      if (response.type === "OK") {
+        toast({ title: "Success", description: "Size chart uploaded successfully." });
+        setIsUploadDialogOpen(false);
+        fetchData();
+      } else {
+        toast({ 
+          title: "Error", 
+          description: response.message || "Failed to upload size chart.", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "An error occurred while uploading size chart.", 
+        variant: "destructive" 
       });
-      if (!res.ok) throw new Error("Failed to upload");
-      setTitle("");
-      setDescription("");
-      setImage(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      fetchSizeCharts();
-    } catch (err) {
-      setError("Failed to upload size chart");
     } finally {
-      setLoading(false);
+      setIsUploading(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this size chart?")) return;
-    setLoading(true);
-    setError(null);
+  const handleDeleteRequested = (sizeChartId: string) => {
+    setItemToDeleteId(sizeChartId);
+    setIsConfirmDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDeleteId) return;
+    setIsLoading(true);
     try {
-      const res = await fetch(`/api/size-charts/${id}`, {
-        method: "DELETE",
-        credentials: "include"
+      const response = await deleteSizeChart(itemToDeleteId);
+      if (response.type === "OK") {
+        toast({ title: "Success", description: "Size chart deleted successfully." });
+        fetchData();
+      } else {
+        toast({ 
+          title: "Error", 
+          description: response.message || "Failed to delete size chart.", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "An error occurred while deleting size chart.", 
+        variant: "destructive" 
       });
-      if (!res.ok) throw new Error("Failed to delete");
-      fetchSizeCharts();
-    } catch (err) {
-      setError("Failed to delete size chart");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+      setIsConfirmDeleteDialogOpen(false);
+      setItemToDeleteId(null);
     }
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Size Charts</h1>
-      <form onSubmit={handleUpload} className="mb-6 flex flex-col gap-2 bg-white p-4 rounded shadow">
-        <label className="font-semibold">Title *</label>
-        <input value={title} onChange={e => setTitle(e.target.value)} className="border p-2 rounded" required />
-        <label>Description</label>
-        <textarea value={description} onChange={e => setDescription(e.target.value)} className="border p-2 rounded" />
-        <label className="font-semibold">Image *</label>
-        <input type="file" accept="image/*" ref={fileInputRef} onChange={e => setImage(e.target.files?.[0] || null)} required />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded mt-2" disabled={loading}>Upload</button>
-      </form>
-      {error && <div className="text-red-600 mb-4">{error}</div>}
-      <div className="grid gap-4">
-        {loading && <div>Loading...</div>}
-        {sizeCharts.map(chart => (
-          <div key={chart._id} className="flex items-center gap-4 bg-gray-50 p-4 rounded shadow">
-            <img src={chart.image} alt={chart.title} className="w-24 h-24 object-contain border rounded" />
-            <div className="flex-1">
-              <div className="font-semibold">{chart.title}</div>
-              {chart.description && <div className="text-gray-600 text-sm">{chart.description}</div>}
-            </div>
-            <button onClick={() => handleDelete(chart._id)} className="text-red-600 hover:underline">Delete</button>
+    <>
+      <PageHeader
+        title="Size Charts"
+        description="Manage size charts for your products."
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={fetchData} disabled={isLoading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button onClick={() => setIsUploadDialogOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Upload Size Chart
+            </Button>
           </div>
-        ))}
-        {sizeCharts.length === 0 && !loading && <div>No size charts uploaded yet.</div>}
-      </div>
-    </div>
+        }
+      />
+
+      <DataTable
+        columns={SizeChartColumns({ onDeleteRequested: handleDeleteRequested })}
+        data={sizeCharts}
+        isLoading={isLoading}
+        pagination={pagination}
+        setPagination={setPagination}
+        filterColumn='title'
+        filterPlaceholder='Filter size charts by title...'
+      />
+
+      {/* Upload Dialog */}
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Upload Size Chart</DialogTitle>
+          </DialogHeader>
+          <SizeChartForm
+            onSubmit={handleUpload}
+            isLoading={isUploading}
+            onCancel={() => setIsUploadDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isConfirmDeleteDialogOpen}
+        onClose={() => setIsConfirmDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Size Chart"
+        description="Are you sure you want to delete this size chart? This action cannot be undone."
+      />
+    </>
   );
 } 

@@ -65,6 +65,7 @@ export interface Product {
   ratings?: { average: number; count: number };
   barcode?: string;
   media?: { url: string; type: 'image' | 'video'; alt: string }[];
+  sizeChart?: string | { _id: string; title: string }; // ObjectId reference to SizeChart or populated object
   createdAt?: string; // date-time
   updatedAt?: string; // date-time
 }
@@ -135,6 +136,15 @@ export interface FAQ {
   question: string;
   answer: string;
   category: string;
+  createdAt?: string; // date-time
+  updatedAt?: string; // date-time
+}
+
+export interface SizeChart {
+  _id: string;
+  title: string;
+  description?: string;
+  image: string;
   createdAt?: string; // date-time
   updatedAt?: string; // date-time
 }

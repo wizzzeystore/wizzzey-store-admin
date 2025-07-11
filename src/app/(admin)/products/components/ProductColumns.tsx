@@ -124,6 +124,19 @@ export const ProductColumns = ({ onDeleteRequested }: ProductColumnsProps): Colu
     }
   },
   {
+    accessorKey: "sizeChart",
+    header: "Size Chart",
+    cell: ({ row }) => {
+      const sizeChart = row.getValue("sizeChart") as any;
+      if (!sizeChart) {
+        return <Badge variant="outline">None</Badge>;
+      }
+      // If sizeChart is populated, it will have a title property
+      const title = typeof sizeChart === 'object' && sizeChart.title ? sizeChart.title : 'Assigned';
+      return <Badge variant="default">{title}</Badge>;
+    },
+  },
+  {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => new Date(row.getValue("createdAt") as string).toLocaleDateString(),

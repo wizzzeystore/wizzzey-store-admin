@@ -10,10 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Product, Category, Brand } from "@/types/ecommerce";
+import type { Product, Category, Brand, SizeChart } from "@/types/ecommerce";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { createProduct, updateProduct, getCategories as fetchCategories, getBrands as fetchBrands, uploadFiles } from "@/lib/apiService";
+import { createProduct, updateProduct, getCategories as fetchCategories, getBrands as fetchBrands, getSizeCharts, uploadFiles } from "@/lib/apiService";
 import React, { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
@@ -58,6 +58,7 @@ const productSchema = z.object({
     type: z.enum(["image", "video"]),
     alt: z.string().optional()
   })).optional(),
+  sizeChart: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -67,6 +68,7 @@ interface ProductFormProps {
 }
 
 const NONE_BRAND_ID_VALUE = "_NONE_BRAND_ID_"; // Special value for "None" brand option
+const NONE_SIZE_CHART_VALUE = "_NONE_SIZE_CHART_"; // Special value for "None" size chart option
 
 export default function ProductForm({ initialData }: ProductFormProps) {
   const router = useRouter();
@@ -75,6 +77,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [sizeCharts, setSizeCharts] = useState<SizeChart[]>([]);
 
   // Remove images state, use files for uploads
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
@@ -112,6 +115,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       ratings: initialData.ratings,
       barcode: initialData.barcode,
       media: initialData.media || [],
+      sizeChart: typeof initialData.sizeChart === 'object' ? initialData.sizeChart._id : initialData.sizeChart,
     } : {
       name: "",
       description: "",
@@ -134,6 +138,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       ratings: undefined,
       barcode: undefined,
       media: [],
+      sizeChart: undefined,
     },
   });
 
@@ -149,9 +154,10 @@ export default function ProductForm({ initialData }: ProductFormProps) {
     async function loadRelatedData() {
       setIsLoading(true);
       try {
-        const [catResponse, brandResponse] = await Promise.all([
+        const [catResponse, brandResponse, sizeChartResponse] = await Promise.all([
           fetchCategories(1, 100),
-          fetchBrands(1, 100)
+          fetchBrands(1, 100),
+          getSizeCharts()
         ]);
         if (catResponse.type === "OK" && catResponse.data?.categories) {
           setCategories(catResponse.data.categories);
@@ -162,6 +168,11 @@ export default function ProductForm({ initialData }: ProductFormProps) {
           setBrands(brandResponse.data.brands);
         } else {
           toast({ title: "Error", description: `Failed to load brands: ${brandResponse.message}`, variant: "destructive" });
+        }
+        if (sizeChartResponse.type === "OK" && sizeChartResponse.data?.sizeCharts) {
+          setSizeCharts(sizeChartResponse.data.sizeCharts);
+        } else {
+          toast({ title: "Error", description: `Failed to load size charts: ${sizeChartResponse.message}`, variant: "destructive" });
         }
       } catch (error) {
         toast({ title: "Error", description: "Failed to load related product data.", variant: "destructive" });
@@ -232,6 +243,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       if (values.seo) formData.append("seo", JSON.stringify({ ...values.seo, keywords: seoKeywords }));
       if (values.ratings) formData.append("ratings", JSON.stringify(values.ratings));
       if (values.barcode) formData.append("barcode", values.barcode);
+      if (values.sizeChart) formData.append("sizeChart", values.sizeChart);
       if (media.length > 0) media.forEach(m => formData.append("media", JSON.stringify(m)));
       // Add deletedImages if any
       if (deletedImages.length > 0) {
@@ -264,6 +276,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
           if (values.seo) updateFormData.append("seo", JSON.stringify({ ...values.seo, keywords: seoKeywords }));
           if (values.ratings) updateFormData.append("ratings", JSON.stringify(values.ratings));
           if (values.barcode) updateFormData.append("barcode", values.barcode);
+          if (values.sizeChart) updateFormData.append("sizeChart", values.sizeChart);
           if (media.length > 0) media.forEach(m => updateFormData.append("media", JSON.stringify(m)));
           if (deletedImages.length > 0) updateFormData.append("deletedImages", JSON.stringify(deletedImages));
           response = await updateProduct(initialData.id, updateFormData);
@@ -285,6 +298,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
             colors: colors,
             tags: tags,
             barcode: values.barcode,
+            sizeChart: values.sizeChart,
             seo: values.seo ? { ...values.seo, keywords: seoKeywords } : undefined,
             ratings: values.ratings,
             brandId: values.brandId,
@@ -482,6 +496,33 @@ export default function ProductForm({ initialData }: ProductFormProps) {
                       <SelectContent>
                         <SelectItem value={NONE_BRAND_ID_VALUE}>None</SelectItem>
                         {brands.map(brand => <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sizeChart"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Size Chart (Optional)</FormLabel>
+                    <Select
+                      onValueChange={(selectedValue) => {
+                        field.onChange(selectedValue === NONE_SIZE_CHART_VALUE ? undefined : selectedValue);
+                      }}
+                      value={field.value || NONE_SIZE_CHART_VALUE}
+                      disabled={isLoading || isUploading}
+                    >
+                      <FormControl><SelectTrigger><SelectValue placeholder="Select a size chart" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value={NONE_SIZE_CHART_VALUE}>None</SelectItem>
+                        {sizeCharts.map(sizeChart => (
+                          <SelectItem key={sizeChart._id} value={sizeChart._id}>
+                            {sizeChart.title}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
