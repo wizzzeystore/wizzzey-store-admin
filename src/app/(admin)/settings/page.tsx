@@ -1,7 +1,7 @@
 "use client";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save, X, RefreshCw, Upload, Trash2 } from "lucide-react";
+import { Loader2, Save, X, RefreshCw, Upload, Trash2, AlertTriangle } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -42,6 +42,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 const settingsSchema = z.object({
   storeName: z.string().min(1, "Store name is required"),
@@ -79,6 +80,8 @@ export default function SettingsPage() {
   const [currentApiKey, setCurrentApiKey] = useState<string>("");
   const [apiKeyLastGenerated, setApiKeyLastGenerated] = useState<string>("");
   const [currentSettings, setCurrentSettings] = useState<AppSettings | null>(null);
+  const [showMaintenanceConfirm, setShowMaintenanceConfirm] = useState(false);
+  const [pendingMaintenanceMode, setPendingMaintenanceMode] = useState(false);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -431,6 +434,31 @@ export default function SettingsPage() {
     } finally {
       setIsDeletingFooter(false);
     }
+  };
+
+  const handleMaintenanceModeChange = (enabled: boolean) => {
+    if (enabled) {
+      setPendingMaintenanceMode(true);
+      setShowMaintenanceConfirm(true);
+    } else {
+      form.setValue('maintenanceMode', false);
+    }
+  };
+
+  const confirmMaintenanceMode = () => {
+    form.setValue('maintenanceMode', true);
+    setShowMaintenanceConfirm(false);
+    setPendingMaintenanceMode(false);
+    toast({
+      title: "Maintenance Mode Enabled",
+      description: "Your web store is now in maintenance mode and inaccessible to customers.",
+      variant: "destructive",
+    });
+  };
+
+  const cancelMaintenanceMode = () => {
+    setShowMaintenanceConfirm(false);
+    setPendingMaintenanceMode(false);
   };
 
   if (isFetching) {
@@ -834,19 +862,32 @@ export default function SettingsPage() {
                 control={form.control}
                 name="maintenanceMode"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Maintenance Mode</FormLabel>
-                      <FormDescription>
-                        Enable maintenance mode to temporarily disable the store.
-                      </FormDescription>
+                  <FormItem>
+                    <div className="rounded-lg border p-4 bg-orange-50 border-orange-200">
+                      <div className="flex flex-row items-center justify-between">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base font-semibold text-orange-900">Maintenance Mode</FormLabel>
+                          <FormDescription className="text-orange-700">
+                            When enabled, the entire web store will be inaccessible to customers and show a maintenance page.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={handleMaintenanceModeChange}
+                            className="data-[state=checked]:bg-orange-600"
+                          />
+                        </FormControl>
+                      </div>
+                      {field.value && (
+                        <Alert className="mt-4 border-orange-300 bg-orange-100">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <AlertDescription className="text-orange-800 font-medium">
+                            ⚠️ Maintenance mode is currently ENABLED. Your web store is now inaccessible to customers.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
                   </FormItem>
                 )}
               />
@@ -1015,6 +1056,15 @@ export default function SettingsPage() {
           </div>
         </form>
       </Form>
+      <ConfirmationDialog
+        isOpen={showMaintenanceConfirm}
+        onClose={cancelMaintenanceMode}
+        onConfirm={confirmMaintenanceMode}
+        title="Enable Maintenance Mode"
+        description="Are you sure you want to enable maintenance mode? This will make your web store inaccessible to customers and show a maintenance page instead."
+        confirmButtonText="Enable Maintenance Mode"
+        confirmButtonVariant="destructive"
+      />
     </>
   );
 }
