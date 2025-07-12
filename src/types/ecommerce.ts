@@ -184,6 +184,19 @@ export interface AppSettings {
     size: number;
     url: string;
   };
+  footerImage?: {
+    filename: string;
+    originalName: string;
+    mimetype: string;
+    size: number;
+    url: string;
+  };
+  footerText?: {
+    title: string;
+    description: string;
+    buttonText: string;
+    buttonLink: string;
+  };
   notifications: {
     newOrderEmails: boolean;
     lowStockAlerts: boolean;

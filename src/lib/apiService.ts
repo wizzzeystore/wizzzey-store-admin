@@ -556,6 +556,22 @@ export const uploadHeroImage = async (file: File): Promise<ApiResponse<{ heroIma
   return { type: 'OK', data: response.data, message: 'Hero image uploaded successfully' };
 };
 
+export const uploadFooterImage = async (file: File): Promise<ApiResponse<{ footerImage: any }>> => {
+  const formData = new FormData();
+  formData.append('footer', file);
+  
+  const response = await fetchApi<ApiResponse<{ footerImage: any }>>('app-settings/upload/footer', {
+    method: 'POST',
+    body: formData,
+  }, true);
+  
+  if (response.type === 'ERROR') {
+    console.error('Failed to upload footer image:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', data: response.data, message: 'Footer image uploaded successfully' };
+};
+
 export const deleteStoreLogo = async (): Promise<ApiResponse> => {
   const response = await fetchApi<ApiResponse>('app-settings/logo', {
     method: 'DELETE',
@@ -576,6 +592,17 @@ export const deleteHeroImage = async (): Promise<ApiResponse> => {
     return { type: 'ERROR', message: response.message, data: null };
   }
   return { type: 'OK', message: 'Hero image deleted successfully' };
+};
+
+export const deleteFooterImage = async (): Promise<ApiResponse> => {
+  const response = await fetchApi<ApiResponse>('app-settings/footer', {
+    method: 'DELETE',
+  });
+  if (response.type === 'ERROR') {
+    console.error('Failed to delete footer image:', response.message);
+    return { type: 'ERROR', message: response.message, data: null };
+  }
+  return { type: 'OK', message: 'Footer image deleted successfully' };
 };
 
 // --- DASHBOARD STATS ---
