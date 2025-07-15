@@ -22,10 +22,11 @@ import { Button } from '@/components/ui/button';
 import AppLogo from '@/components/AppLogo';
 import { UserNav } from '@/components/UserNav';
 import { useAuth } from '@/contexts/AuthContext';
-import { canAccessOrders, canAccessUsers, canAccessProducts, canAccessInventory, canAccessBrands, canAccessAnalytics } from '@/lib/permissions';
+import { canAccessOrders, canAccessUsers, canAccessProducts, canAccessInventory, canAccessBrands, canAccessAnalytics, canAccessReturns } from '@/lib/permissions';
 import {
   LayoutDashboard, ShoppingBag, Users, Settings, ListOrdered, Activity, BarChart3,
-  Users2, ShoppingCart, PercentSquare, Newspaper, MessageSquareQuote, Briefcase, Palette, HardDrive, Warehouse, Trash2
+  Users2, ShoppingCart, PercentSquare, Newspaper, MessageSquareQuote, Briefcase, Palette, HardDrive, Warehouse, Trash2,
+  ReceiptPoundSterling
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -59,6 +60,10 @@ const getNavItems = (user: any): NavItem[] => {
 
   if (canAccessOrders(user)) {
     items.push({ href: '/orders', label: 'Orders', icon: ShoppingCart });
+  }
+
+  if (canAccessReturns(user)) {
+    items.push({ href: '/return-exchange-orders', label: 'Return/Exchange', icon: ReceiptPoundSterling });
   }
 
   items.push({ href: '/customers', label: 'Customers', icon: Users2 });

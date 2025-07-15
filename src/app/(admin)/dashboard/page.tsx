@@ -111,7 +111,7 @@ export default function DashboardPage() {
     <>
       <PageHeader title="Dashboard" description="Overview of your Wizzzey store." />
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6 mb-8">
         <StatCard 
             title="Today's Orders" 
             value={dashboardData?.todayStats?.orders?.toString() ?? "0"} 
@@ -142,6 +142,22 @@ export default function DashboardPage() {
             icon={Users} 
             description="All-time customers" 
             href="/customers" 
+            isLoading={isLoadingStats}
+        />
+        <StatCard
+            title="Today's Returns/Exchanges"
+            value={dashboardData?.todayStats?.returns?.toString() ?? "0"}
+            icon={Activity}
+            description="Return/Exchange requests today"
+            href="/return-exchange-orders"
+            isLoading={isLoadingStats}
+        />
+        <StatCard
+            title="Total Returns/Exchanges"
+            value={dashboardData?.overallStats?.totalReturns?.toString() ?? "0"}
+            icon={Activity}
+            description="All-time return/exchange requests"
+            href="/return-exchange-orders"
             isLoading={isLoadingStats}
         />
       </div>

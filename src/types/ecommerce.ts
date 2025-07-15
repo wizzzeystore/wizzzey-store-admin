@@ -401,12 +401,14 @@ export interface OrderPlacedBatch {
 export interface TodayStats {
   orders: number;
   revenue: number;
+  returns: number; // Added: today's return/exchange requests
 }
 
 export interface OverallStats {
   totalOrders: number;
   totalRevenue: number;
   totalCustomers: number;
+  totalReturns: number; // Added: all-time return/exchange requests
 }
 
 export interface SalesOverviewItem {

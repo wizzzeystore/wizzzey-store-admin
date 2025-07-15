@@ -857,3 +857,12 @@ export const updateOrderReturnRequest = async (orderId: string, returnId: string
   if (response.type === 'ERROR') throw new Error(response.message || 'Failed to update return request');
   return response.data?.return;
 };
+
+// Return/Exchange API (admin)
+export const fetchAllReturnRequests = async (params: { page?: number; status?: string; type?: string } = {}): Promise<PaginatedResponse<any, 'requests'>> => {
+  const query = new URLSearchParams();
+  if (params.page) query.set('page', String(params.page));
+  if (params.status) query.set('status', params.status);
+  if (params.type) query.set('type', params.type);
+  return fetchApi<PaginatedResponse<any, 'requests'>>(`orders/returns?${query.toString()}`);
+};

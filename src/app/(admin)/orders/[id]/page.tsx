@@ -358,66 +358,13 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
       </Card>
 
       {/* Returns/Exchanges Section */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Returns / Exchanges</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {returns.length === 0 ? (
-            <div className="text-muted-foreground">No return or exchange requests for this order.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-border">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 text-left">Item</th>
-                    <th className="px-4 py-2 text-left">Type</th>
-                    <th className="px-4 py-2 text-left">Reason</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                    <th className="px-4 py-2 text-left">Requested At</th>
-                    <th className="px-4 py-2 text-left">Quantity</th>
-                    <th className="px-4 py-2 text-left">Exchange For</th>
-                    <th className="px-4 py-2 text-left">Admin Notes</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {returns.map((ret, idx) => {
-                    const item = order.items.find(i => i.productId === ret.itemId);
-                    return (
-                      <tr key={ret._id || idx} className="border-b">
-                        <td className="px-4 py-2">
-                          {item ? (
-                            <div className="flex items-center gap-2">
-                              <img src={item.productImage || 'https://placehold.co/60x60.png'} alt={item.productName} className="w-10 h-10 object-cover rounded" />
-                              <span>{item.productName}</span>
-                              {item.sku && (
-                                <span className="ml-2 text-xs text-muted-foreground">SKU: {item.sku}</span>
-                              )}
-                            </div>
-                          ) : ret.itemId}
-                        </td>
-                        <td className="px-4 py-2">{ret.type}</td>
-                        <td className="px-4 py-2">{ret.reason}</td>
-                        <td className="px-4 py-2">{ret.status}</td>
-                        <td className="px-4 py-2">{ret.requestedAt ? new Date(ret.requestedAt).toLocaleString() : '-'}</td>
-                        <td className="px-4 py-2">{ret.quantity}</td>
-                        <td className="px-4 py-2">{ret.type === 'exchange' ? `${ret.exchangeForSize || ''} ${ret.exchangeForColor || ''}` : '-'}</td>
-                        <td className="px-4 py-2">{ret.adminNotes || '-'}</td>
-                        <td className="px-4 py-2">
-                          <Button size="sm" variant="outline" onClick={() => handleOpenReturnDialog(ret)}>
-                            Update
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {returns.length > 0 && (
+        <div className="mt-6">
+          <Button variant="outline" onClick={() => router.push(`/return-exchange-orders`)}>
+            View Return/Exchange Request(s)
+          </Button>
+        </div>
+      )}
 
       {/* Return/Exchange Update Dialog */}
       <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
