@@ -83,7 +83,8 @@ export default function ProductsPage() {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_STORE_URL;
-    const groupedUrl = `${baseUrl}/shop?products_ids=[${selectedProductIds.join(', ')}]`;
+    // Join IDs with commas, no brackets or spaces
+    const groupedUrl = `${baseUrl}/shop?products_ids=${selectedProductIds.join(',')}`;
     
     // Copy to clipboard
     navigator.clipboard.writeText(groupedUrl).then(() => {
