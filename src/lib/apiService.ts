@@ -51,6 +51,16 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit, isFormData: 
       headers: { ...headers, ...options?.headers }
     });
 
+    if (response.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('wizzzeyAuthState');
+        window.location.href = '/login';
+      }
+      // Optionally, return a rejected promise or error object
+      throw new Error('Unauthorized: Token expired or invalid. Redirecting to login.');
+    }
+
     if (!response.ok) {
       let errorData;
       try {
@@ -493,7 +503,7 @@ export const getAppSettings = async (): Promise<ApiResponse<AppSettings>> => {
   const response = await fetchApi<ApiResponse<{ settings: AppSettings }>>('app-settings');
   if (response.type === 'ERROR') {
     console.error('Failed to fetch app settings:', response.message);
-    return { type: 'ERROR', message: response.message, data: null };
+    return { type: 'ERROR', message: response.message, data: undefined };
   }
   const data = response.data?.settings || undefined;
   return { type: 'OK', data, message: 'App settings fetched successfully' };
@@ -507,7 +517,7 @@ export const updateAppSettings = async (settingsData: Partial<AppSettings>): Pro
   });
   if (response.type === 'ERROR') {
     console.error('Failed to update app settings:', response.message);
-    return { type: 'ERROR', message: response.message, data: null };
+    return { type: 'ERROR', message: response.message, data: undefined };
   }
   return { type: 'OK', data: response.data?.settings, message: 'App settings updated successfully' };
 };
@@ -518,7 +528,7 @@ export const generateApiKey = async (): Promise<ApiResponse<{ apiKey: string }>>
   });
   if (response.type === 'ERROR') {
     console.error('Failed to generate API key:', response.message);
-    return { type: 'ERROR', message: response.message, data: null };
+    return { type: 'ERROR', message: response.message, data: undefined };
   }
   return { type: 'OK', data: response.data, message: 'API key generated successfully' };
 };
@@ -535,7 +545,7 @@ export const uploadStoreLogo = async (file: File): Promise<ApiResponse<{ storeLo
   
   if (response.type === 'ERROR') {
     console.error('Failed to upload store logo:', response.message);
-    return { type: 'ERROR', message: response.message, data: null };
+    return { type: 'ERROR', message: response.message, data: undefined };
   }
   return { type: 'OK', data: response.data, message: 'Store logo uploaded successfully' };
 };
@@ -551,7 +561,7 @@ export const uploadHeroImage = async (file: File): Promise<ApiResponse<{ heroIma
   
   if (response.type === 'ERROR') {
     console.error('Failed to upload hero image:', response.message);
-    return { type: 'ERROR', message: response.message, data: null };
+    return { type: 'ERROR', message: response.message, data: undefined };
   }
   return { type: 'OK', data: response.data, message: 'Hero image uploaded successfully' };
 };
@@ -567,7 +577,7 @@ export const uploadFooterImage = async (file: File): Promise<ApiResponse<{ foote
   
   if (response.type === 'ERROR') {
     console.error('Failed to upload footer image:', response.message);
-    return { type: 'ERROR', message: response.message, data: null };
+    return { type: 'ERROR', message: response.message, data: undefined };
   }
   return { type: 'OK', data: response.data, message: 'Footer image uploaded successfully' };
 };
