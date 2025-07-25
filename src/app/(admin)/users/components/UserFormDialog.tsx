@@ -23,7 +23,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
     email: '',
     password: '',
     role: 'Customer' as 'Admin' | 'Customer' | 'Moderator' | 'BrandPartner',
-    assignedBrand: '',
+    assignedBrand: { _id: '', name: '', slug: '' } as { _id: string; name: string; slug: string } | undefined,
     phone: '',
     isActive: true,
     permissions: {
@@ -32,7 +32,8 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
       canManageOrders: false,
       canManageInventory: false,
       canManageBrands: false,
-      canViewAnalytics: false
+      canViewAnalytics: false,
+      canManageReturnExchange: false
     }
   });
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -49,7 +50,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
           email: user.email || '',
           password: '',
           role: user.role || 'Customer',
-          assignedBrand: user.assignedBrand?._id || '',
+          assignedBrand: user.assignedBrand || { _id: '', name: '', slug: '' },
           phone: user.phone || '',
           isActive: user.isActive ?? true,
           permissions: user.permissions || {
@@ -58,7 +59,8 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
             canManageOrders: false,
             canManageInventory: false,
             canManageBrands: false,
-            canViewAnalytics: false
+            canViewAnalytics: false,
+            canManageReturnExchange: false
           }
         });
       } else {
@@ -67,7 +69,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
           email: '',
           password: '',
           role: 'Customer',
-          assignedBrand: '',
+          assignedBrand: { _id: '', name: '', slug: '' },
           phone: '',
           isActive: true,
           permissions: {
@@ -76,7 +78,8 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
             canManageOrders: false,
             canManageInventory: false,
             canManageBrands: false,
-            canViewAnalytics: false
+            canViewAnalytics: false,
+            canManageReturnExchange: false
           }
         });
       }
@@ -171,7 +174,8 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
           canManageOrders: true,
           canManageInventory: true,
           canManageBrands: true,
-          canViewAnalytics: true
+          canViewAnalytics: true,
+          canManageReturnExchange: true
         };
       case 'Moderator':
         return {
@@ -180,7 +184,8 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
           canManageOrders: true,
           canManageInventory: true,
           canManageBrands: false,
-          canViewAnalytics: true
+          canViewAnalytics: true,
+          canManageReturnExchange: false
         };
       case 'BrandPartner':
         return {
@@ -189,7 +194,8 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
           canManageOrders: true,
           canManageInventory: false,
           canManageBrands: false,
-          canViewAnalytics: false
+          canViewAnalytics: false,
+          canManageReturnExchange: false
         };
       case 'Customer':
         return {
@@ -198,10 +204,19 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
           canManageOrders: false,
           canManageInventory: false,
           canManageBrands: false,
-          canViewAnalytics: false
+          canViewAnalytics: false,
+          canManageReturnExchange: false
         };
       default:
-        return formData.permissions;
+        return {
+          canManageUsers: false,
+          canManageProducts: false,
+          canManageOrders: false,
+          canManageInventory: false,
+          canManageBrands: false,
+          canViewAnalytics: false,
+          canManageReturnExchange: false
+        };
     }
   };
 
@@ -289,8 +304,8 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
                 Assigned Brand {formData.role === 'BrandPartner' && '*'}
               </Label>
               <Select 
-                value={formData.assignedBrand || "none"} 
-                onValueChange={(value) => handleInputChange('assignedBrand', value === "none" ? "" : value)}
+                value={formData.assignedBrand ? formData.assignedBrand._id : "none"} 
+                onValueChange={(value) => handleInputChange('assignedBrand', value === "none" ? undefined : { _id: value, name: '', slug: '' })}
                 disabled={isLoadingBrands}
               >
                 <SelectTrigger>
@@ -327,7 +342,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canManageUsers"
-                    checked={formData.permissions.canManageUsers}
+                    checked={!!formData.permissions.canManageUsers}
                     onCheckedChange={(checked) => handlePermissionChange('canManageUsers', checked)}
                   />
                   <Label htmlFor="canManageUsers">Manage Users</Label>
@@ -335,7 +350,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canManageProducts"
-                    checked={formData.permissions.canManageProducts}
+                    checked={!!formData.permissions.canManageProducts}
                     onCheckedChange={(checked) => handlePermissionChange('canManageProducts', checked)}
                   />
                   <Label htmlFor="canManageProducts">Manage Products</Label>
@@ -343,7 +358,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canManageOrders"
-                    checked={formData.permissions.canManageOrders}
+                    checked={!!formData.permissions.canManageOrders}
                     onCheckedChange={(checked) => handlePermissionChange('canManageOrders', checked)}
                   />
                   <Label htmlFor="canManageOrders">Manage Orders</Label>
@@ -351,7 +366,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canManageInventory"
-                    checked={formData.permissions.canManageInventory}
+                    checked={!!formData.permissions.canManageInventory}
                     onCheckedChange={(checked) => handlePermissionChange('canManageInventory', checked)}
                   />
                   <Label htmlFor="canManageInventory">Manage Inventory</Label>
@@ -359,7 +374,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canManageBrands"
-                    checked={formData.permissions.canManageBrands}
+                    checked={!!formData.permissions.canManageBrands}
                     onCheckedChange={(checked) => handlePermissionChange('canManageBrands', checked)}
                   />
                   <Label htmlFor="canManageBrands">Manage Brands</Label>
@@ -367,10 +382,18 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="canViewAnalytics"
-                    checked={formData.permissions.canViewAnalytics}
+                    checked={!!formData.permissions.canViewAnalytics}
                     onCheckedChange={(checked) => handlePermissionChange('canViewAnalytics', checked)}
                   />
                   <Label htmlFor="canViewAnalytics">View Analytics</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="canManageReturnExchange"
+                    checked={!!formData.permissions.canManageReturnExchange}
+                    onCheckedChange={(checked) => handlePermissionChange('canManageReturnExchange', checked)}
+                  />
+                  <Label htmlFor="canManageReturnExchange">Manage Returns/Exchange</Label>
                 </div>
               </div>
             </div>
