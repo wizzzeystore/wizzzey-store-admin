@@ -57,6 +57,12 @@ const settingsSchema = z.object({
     buttonText: z.string().min(1, "Button text is required"),
     buttonLink: z.string().min(1, "Button link is required"),
   }).optional(),
+  announcementBar: z.object({
+    enabled: z.boolean(),
+    text: z.string().min(1, "Announcement text is required"),
+    backgroundColor: z.string().min(1, "Background color is required"),
+    textColor: z.string().min(1, "Text color is required"),
+  }).optional(),
   notifications: z.object({
     newOrderEmails: z.boolean(),
     lowStockAlerts: z.boolean(),
@@ -97,6 +103,12 @@ export default function SettingsPage() {
         description: "",
         buttonText: "",
         buttonLink: "",
+      },
+      announcementBar: {
+        enabled: true,
+        text: "ADDITIONAL 10% OFF ON PREPAID ORDERS",
+        backgroundColor: "#000000",
+        textColor: "#ffffff",
       },
       notifications: {
         newOrderEmails: true,
@@ -139,6 +151,7 @@ export default function SettingsPage() {
             themeAccentColor: settings.themeAccentColor,
             storeLogoUrl: settings.storeLogoUrl,
             footerText: settings.footerText,
+            announcementBar: settings.announcementBar,
             notifications: settings.notifications,
           });
           setCurrentApiKey(settings.apiSettings?.apiKey || "");
@@ -174,6 +187,7 @@ export default function SettingsPage() {
         themeAccentColor: data.themeAccentColor,
         storeLogoUrl: data.storeLogoUrl,
         footerText: data.footerText,
+        announcementBar: data.announcementBar,
         notifications: data.notifications,
       };
       const response = await updateAppSettings(payload);
@@ -553,6 +567,133 @@ export default function SettingsPage() {
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Announcement Bar</CardTitle>
+              <CardDescription>
+                Configure the animated announcement text that appears at the top of your web store.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="announcementBar.enabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Enable Announcement Bar</FormLabel>
+                      <FormDescription>
+                        Show or hide the announcement bar on your web store.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="announcementBar.text"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Announcement Text</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="ADDITIONAL 10% OFF ON PREPAID ORDERS" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      The text that will be displayed in the animated announcement bar.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="announcementBar.backgroundColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Background Color</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center space-x-2">
+                          <Input 
+                            type="color"
+                            {...field} 
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input 
+                            placeholder="#000000" 
+                            {...field} 
+                            className="flex-1"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Background color for the announcement bar.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="announcementBar.textColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Text Color</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center space-x-2">
+                          <Input 
+                            type="color"
+                            {...field} 
+                            className="w-16 h-10 p-1"
+                          />
+                          <Input 
+                            placeholder="#ffffff" 
+                            {...field} 
+                            className="flex-1"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Text color for the announcement bar.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Preview */}
+              <div className="space-y-2">
+                <FormLabel>Preview</FormLabel>
+                <div 
+                  className="p-2 rounded border overflow-hidden"
+                  style={{
+                    backgroundColor: form.watch('announcementBar.backgroundColor') || '#000000',
+                    color: form.watch('announcementBar.textColor') || '#ffffff'
+                  }}
+                >
+                  <div className="animate-marquee whitespace-nowrap">
+                    <span className="text-sm font-medium inline-block">
+                      {form.watch('announcementBar.text') || 'ADDITIONAL 10% OFF ON PREPAID ORDERS'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

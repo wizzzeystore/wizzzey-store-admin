@@ -197,6 +197,12 @@ export interface AppSettings {
     buttonText: string;
     buttonLink: string;
   };
+  announcementBar?: {
+    enabled: boolean;
+    text: string;
+    backgroundColor: string;
+    textColor: string;
+  };
   notifications: {
     newOrderEmails: boolean;
     lowStockAlerts: boolean;
