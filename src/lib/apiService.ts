@@ -582,6 +582,24 @@ export const uploadFooterImage = async (file: File): Promise<ApiResponse<{ foote
   return { type: 'OK', data: response.data, message: 'Footer image uploaded successfully' };
 };
 
+export const uploadHeroImageMobile = async (file: File): Promise<ApiResponse<{ heroImageMobile: any }>> => {
+  const formData = new FormData();
+  formData.append('heroMobile', file);
+  return fetchApi<ApiResponse<{ heroImageMobile: any }>>('app-settings/upload/hero-mobile', {
+    method: 'POST',
+    body: formData,
+  }, true);
+};
+
+export const uploadFooterImageMobile = async (file: File): Promise<ApiResponse<{ footerImageMobile: any }>> => {
+  const formData = new FormData();
+  formData.append('footerMobile', file);
+  return fetchApi<ApiResponse<{ footerImageMobile: any }>>('app-settings/upload/footer-mobile', {
+    method: 'POST',
+    body: formData,
+  }, true);
+};
+
 export const deleteStoreLogo = async (): Promise<ApiResponse> => {
   const response = await fetchApi<ApiResponse>('app-settings/logo', {
     method: 'DELETE',

@@ -36,7 +36,9 @@ import {
   uploadFooterImage,
   deleteStoreLogo,
   deleteHeroImage,
-  deleteFooterImage
+  deleteFooterImage,
+  uploadHeroImageMobile,
+  uploadFooterImageMobile
 } from "@/lib/apiService";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -88,6 +90,10 @@ export default function SettingsPage() {
   const [currentSettings, setCurrentSettings] = useState<AppSettings | null>(null);
   const [showMaintenanceConfirm, setShowMaintenanceConfirm] = useState(false);
   const [pendingMaintenanceMode, setPendingMaintenanceMode] = useState(false);
+
+  // Add state for uploading mobile images
+  const [isUploadingHeroMobile, setIsUploadingHeroMobile] = useState(false);
+  const [isUploadingFooterMobile, setIsUploadingFooterMobile] = useState(false);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -325,6 +331,30 @@ export default function SettingsPage() {
     }
   };
 
+  const handleHeroMobileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      toast({ title: "Validation Error", description: validationError, variant: "destructive" });
+      return;
+    }
+    setIsUploadingHeroMobile(true);
+    try {
+      const response = await uploadHeroImageMobile(file);
+      if (response.type === "OK" && response.data) {
+        setCurrentSettings(prev => prev ? { ...prev, heroImageMobile: response.data.heroImageMobile } : null);
+        toast({ title: "Success", description: "Mobile hero image uploaded successfully." });
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to upload mobile hero image.", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "An error occurred while uploading mobile hero image.", variant: "destructive" });
+    } finally {
+      setIsUploadingHeroMobile(false);
+    }
+  };
+
   const handleFooterUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -363,6 +393,30 @@ export default function SettingsPage() {
       });
     } finally {
       setIsUploadingFooter(false);
+    }
+  };
+
+  const handleFooterMobileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      toast({ title: "Validation Error", description: validationError, variant: "destructive" });
+      return;
+    }
+    setIsUploadingFooterMobile(true);
+    try {
+      const response = await uploadFooterImageMobile(file);
+      if (response.type === "OK" && response.data) {
+        setCurrentSettings(prev => prev ? { ...prev, footerImageMobile: response.data.footerImageMobile } : null);
+        toast({ title: "Success", description: "Mobile footer image uploaded successfully." });
+      } else {
+        toast({ title: "Error", description: response.message || "Failed to upload mobile footer image.", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "An error occurred while uploading mobile footer image.", variant: "destructive" });
+    } finally {
+      setIsUploadingFooterMobile(false);
     }
   };
 
@@ -774,222 +828,142 @@ export default function SettingsPage() {
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Hero Section Image</CardTitle>
+              <CardTitle>Hero Section Images</CardTitle>
               <CardDescription>
-                Upload an image for your homepage hero section. This will be displayed prominently on your store's homepage.
+                Upload separate images for desktop and mobile hero sections.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Alert>
-                <AlertDescription>
-                  <strong>Upload Requirements:</strong>
-                  <ul className="mt-2 list-disc list-inside space-y-1">
-                    <li>Only PNG and JPEG images are allowed</li>
-                    <li>Maximum file size: 5MB</li>
-                    <li>Recommended dimensions: 1200x600px or similar aspect ratio</li>
-                    <li>High-quality images work best for hero sections</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-
-              {currentSettings?.heroImage ? (
-                <div className="space-y-4">
-                  <div className="relative inline-block">
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.heroImage.url}`}
-                      alt="Hero Image"
-                      width={400}
-                      height={200}
-                      className="rounded-md border"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute -top-2 -right-2"
-                      onClick={handleDeleteHero}
-                      disabled={isDeletingHero}
-                    >
-                      {isDeletingHero ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p>Filename: {currentSettings.heroImage.originalName}</p>
-                    <p>Size: {(currentSettings.heroImage.size / 1024).toFixed(1)} KB</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Desktop Hero Image */}
+                <div>
+                  <FormLabel>Desktop Hero Image</FormLabel>
+                  <div className="flex items-center gap-4 mt-2">
+                    {currentSettings?.heroImage?.url && (
+                      <Image src={currentSettings.heroImage.url} alt="Desktop Hero" width={180} height={100} className="rounded border" />
+                    )}
+                    <Input type="file" accept="image/*" onChange={handleHeroUpload} disabled={isUploadingHero} />
+                    {isUploadingHero && <Loader2 className="animate-spin ml-2" />}
                   </div>
                 </div>
-              ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-600">No hero image uploaded</p>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-4">
-                <Input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg"
-                  onChange={handleHeroUpload}
-                  disabled={isUploadingHero}
-                  className="flex-1"
-                />
-                {isUploadingHero && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Uploading...</span>
+                {/* Mobile Hero Image */}
+                <div>
+                  <FormLabel>Mobile Hero Image</FormLabel>
+                  <div className="flex items-center gap-4 mt-2">
+                    {currentSettings?.heroImageMobile?.url && (
+                      <Image src={currentSettings.heroImageMobile.url} alt="Mobile Hero" width={100} height={100} className="rounded border" />
+                    )}
+                    <Input type="file" accept="image/*" onChange={handleHeroMobileUpload} disabled={isUploadingHeroMobile} />
+                    {isUploadingHeroMobile && <Loader2 className="animate-spin ml-2" />}
                   </div>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Footer Image</CardTitle>
+              <CardTitle>Footer Section Images</CardTitle>
               <CardDescription>
-                Upload an image to be displayed in the footer of your store.
+                Upload separate images for desktop and mobile footer sections.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Alert>
-                <AlertDescription>
-                  <strong>Upload Requirements:</strong>
-                  <ul className="mt-2 list-disc list-inside space-y-1">
-                    <li>Only PNG and JPEG images are allowed</li>
-                    <li>Maximum file size: 5MB</li>
-                    <li>Recommended dimensions: 1200x600px or similar aspect ratio</li>
-                    <li>High-quality images work best for footer sections</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-
-              {currentSettings?.footerImage ? (
-                <div className="space-y-4">
-                  <div className="relative inline-block">
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.footerImage.url}`}
-                      alt="Footer Image"
-                      width={400}
-                      height={200}
-                      className="rounded-md border"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute -top-2 -right-2"
-                      onClick={handleDeleteFooter}
-                      disabled={isDeletingFooter}
-                    >
-                      {isDeletingFooter ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p>Filename: {currentSettings.footerImage.originalName}</p>
-                    <p>Size: {(currentSettings.footerImage.size / 1024).toFixed(1)} KB</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Desktop Footer Image */}
+                <div>
+                  <FormLabel>Desktop Footer Image</FormLabel>
+                  <div className="flex items-center gap-4 mt-2">
+                    {currentSettings?.footerImage?.url && (
+                      <Image src={currentSettings.footerImage.url} alt="Desktop Footer" width={180} height={100} className="rounded border" />
+                    )}
+                    <Input type="file" accept="image/*" onChange={handleFooterUpload} disabled={isUploadingFooter} />
+                    {isUploadingFooter && <Loader2 className="animate-spin ml-2" />}
                   </div>
                 </div>
-              ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-600">No footer image uploaded</p>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-4">
-                <Input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg"
-                  onChange={handleFooterUpload}
-                  disabled={isUploadingFooter}
-                  className="flex-1"
-                />
-                {isUploadingFooter && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Uploading...</span>
+                {/* Mobile Footer Image */}
+                <div>
+                  <FormLabel>Mobile Footer Image</FormLabel>
+                  <div className="flex items-center gap-4 mt-2">
+                    {currentSettings?.footerImageMobile?.url && (
+                      <Image src={currentSettings.footerImageMobile.url} alt="Mobile Footer" width={100} height={100} className="rounded border" />
+                    )}
+                    <Input type="file" accept="image/*" onChange={handleFooterMobileUpload} disabled={isUploadingFooterMobile} />
+                    {isUploadingFooterMobile && <Loader2 className="animate-spin ml-2" />}
                   </div>
-                )}
-              </div>
-
-              {/* Footer Text Fields */}
-              <div className="space-y-4 pt-4 border-t">
-                <h4 className="text-lg font-semibold">Footer Text Content</h4>
-                <p className="text-sm text-muted-foreground">
-                  Customize the text that appears over the footer image on your homepage.
-                </p>
-                
-                <FormField
-                  control={form.control}
-                  name="footerText.title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Fresh Styles Just In!" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="footerText.description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Don't miss out on our newest arrivals. Update your wardrobe with the latest looks."
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="footerText.buttonText"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Button Text</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Explore New Arrivals" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="footerText.buttonLink"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Button Link</FormLabel>
-                        <FormControl>
-                          <Input placeholder="/shop?sortBy=createdAt&sortOrder=desc" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Footer Text Fields */}
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="text-lg font-semibold">Footer Text Content</h4>
+            <p className="text-sm text-muted-foreground">
+              Customize the text that appears over the footer image on your homepage.
+            </p>
+            
+            <FormField
+              control={form.control}
+              name="footerText.title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Fresh Styles Just In!" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="footerText.description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Don't miss out on our newest arrivals. Update your wardrobe with the latest looks."
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="footerText.buttonText"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Button Text</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Explore New Arrivals" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="footerText.buttonLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Button Link</FormLabel>
+                    <FormControl>
+                      <Input placeholder="/shop?sortBy=createdAt&sortOrder=desc" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
           <Card className="shadow-lg">
             <CardHeader>
