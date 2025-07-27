@@ -7,6 +7,11 @@ import { QueryProvider } from '@/providers/QueryProvider';
 export const metadata: Metadata = {
   title: 'Wizzzey Admin',
   description: 'Admin panel for Wizzzey',
+  icons: {
+    icon: '/wizzzey_logo.png',
+    shortcut: '/wizzzey_logo.png',
+    apple: '/wizzzey_logo.png',
+  },
 };
 
 export default function RootLayout({
