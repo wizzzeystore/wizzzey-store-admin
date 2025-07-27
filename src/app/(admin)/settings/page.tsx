@@ -840,7 +840,7 @@ export default function SettingsPage() {
                   <FormLabel>Desktop Hero Image</FormLabel>
                   <div className="flex items-center gap-4 mt-2">
                     {currentSettings?.heroImage?.url && (
-                      <Image src={currentSettings.heroImage.url} alt="Desktop Hero" width={180} height={100} className="rounded border" />
+                      <Image src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.heroImage.url}`} alt="Desktop Hero" width={180} height={100} className="rounded border" />
                     )}
                     <Input type="file" accept="image/*" onChange={handleHeroUpload} disabled={isUploadingHero} />
                     {isUploadingHero && <Loader2 className="animate-spin ml-2" />}
@@ -851,7 +851,7 @@ export default function SettingsPage() {
                   <FormLabel>Mobile Hero Image</FormLabel>
                   <div className="flex items-center gap-4 mt-2">
                     {currentSettings?.heroImageMobile?.url && (
-                      <Image src={currentSettings.heroImageMobile.url} alt="Mobile Hero" width={100} height={100} className="rounded border" />
+                      <Image src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.heroImageMobile.url}`} alt="Mobile Hero" width={100} height={100} className="rounded border" />
                     )}
                     <Input type="file" accept="image/*" onChange={handleHeroMobileUpload} disabled={isUploadingHeroMobile} />
                     {isUploadingHeroMobile && <Loader2 className="animate-spin ml-2" />}
@@ -875,7 +875,7 @@ export default function SettingsPage() {
                   <FormLabel>Desktop Footer Image</FormLabel>
                   <div className="flex items-center gap-4 mt-2">
                     {currentSettings?.footerImage?.url && (
-                      <Image src={currentSettings.footerImage.url} alt="Desktop Footer" width={180} height={100} className="rounded border" />
+                      <Image src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.footerImage.url}`} alt="Desktop Footer" width={180} height={100} className="rounded border" />
                     )}
                     <Input type="file" accept="image/*" onChange={handleFooterUpload} disabled={isUploadingFooter} />
                     {isUploadingFooter && <Loader2 className="animate-spin ml-2" />}
@@ -886,7 +886,7 @@ export default function SettingsPage() {
                   <FormLabel>Mobile Footer Image</FormLabel>
                   <div className="flex items-center gap-4 mt-2">
                     {currentSettings?.footerImageMobile?.url && (
-                      <Image src={currentSettings.footerImageMobile.url} alt="Mobile Footer" width={100} height={100} className="rounded border" />
+                      <Image src={`${process.env.NEXT_PUBLIC_API_URL}${currentSettings.footerImageMobile.url}`} alt="Mobile Footer" width={100} height={100} className="rounded border" />
                     )}
                     <Input type="file" accept="image/*" onChange={handleFooterMobileUpload} disabled={isUploadingFooterMobile} />
                     {isUploadingFooterMobile && <Loader2 className="animate-spin ml-2" />}
