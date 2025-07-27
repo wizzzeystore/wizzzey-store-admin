@@ -20,8 +20,8 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
       setIsLoading(true);
       try {
         const response = await getCategoryById(id);
-        if (response.type === "OK" && response.data?.categories && response.data.categories.length > 0) {
-          setCategory(response.data.categories[0]);
+        if (response.type === "OK" && response.data?.category) {
+          setCategory(response.data.category);
         } else {
           toast({ title: "Error", description: response.message || "Failed to fetch category details.", variant: "destructive" });
         }

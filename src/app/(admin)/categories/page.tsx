@@ -23,7 +23,7 @@ export default function CategoriesPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const response = await getCategories(pagination.pageIndex + 1, pagination.pageSize);
+      const response = await getCategories(pagination.pageIndex + 1, pagination.pageSize, { showAll: true });
       if (response.type === 'OK' && response.data?.categories) {
         setCategories(response.data.categories);
          if (response.pagination) {

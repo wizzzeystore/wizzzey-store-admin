@@ -114,7 +114,7 @@ export default function CategoryForm({ initialData }: CategoryFormProps) {
   useEffect(() => {
     async function loadParentCategories() {
       try {
-        const response = await fetchParentCategories(1, 100); // Fetch all potential parent categories
+        const response = await fetchParentCategories(1, 100, { showAll: true }); // Fetch all potential parent categories
         if (response.type === "OK" && response.data?.categories) {
           // Filter out the current category if editing, to prevent self-parenting
           setParentCategories(

@@ -155,7 +155,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       setIsLoading(true);
       try {
         const [catResponse, brandResponse, sizeChartResponse] = await Promise.all([
-          fetchCategories(1, 100),
+          fetchCategories(1, 100, { showAll: true }),
           fetchBrands(1, 100),
           getSizeCharts()
         ]);

@@ -149,8 +149,8 @@ export const getCategories = async (page = 1, limit = 10, filters: Record<string
   const queryParams = new URLSearchParams({ page: String(page), limit: String(limit), ...filters });
   return fetchApi<PaginatedResponse<Category, 'categories'>>(`categories?${queryParams.toString()}`);
 };
-export const getCategoryById = async (id: string): Promise<ApiResponse<{categories:Category[]}>> => {
-  return fetchApi<ApiResponse<{categories:Category[]}>>(`categories?id=${id}`);
+export const getCategoryById = async (id: string): Promise<ApiResponse<{category:Category}>> => {
+  return fetchApi<ApiResponse<{category:Category}>>(`categories/${id}`);
 };
 export const createCategory = async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'> | FormData): Promise<ApiResponse<Category>> => {
   let body: BodyInit;
@@ -175,13 +175,13 @@ export const updateCategory = async (id: string, categoryData: Partial<Category>
   } else {
     body = JSON.stringify(categoryData);
   }
-  return fetchApi<ApiResponse<Category>>(`categories?id=${id}`, {
+  return fetchApi<ApiResponse<Category>>(`categories/${id}`, {
     method: 'PUT',
     body: body,
   }, isFormData);
 };
 export const deleteCategory = async (id: string): Promise<ApiResponse> => {
-  return fetchApi<ApiResponse>(`categories?id=${id}`, {
+  return fetchApi<ApiResponse>(`categories/${id}`, {
     method: 'DELETE',
   });
 };
