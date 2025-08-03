@@ -18,6 +18,7 @@ export interface User {
     canManageInventory: boolean;
     canManageBrands: boolean;
     canViewAnalytics: boolean;
+    canManageReturnExchange: boolean;
   };
   phone?: string;
   shippingAddress?: any;

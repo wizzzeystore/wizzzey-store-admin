@@ -7,7 +7,7 @@ export interface Permissions {
   canManageInventory: boolean;
   canManageBrands: boolean;
   canViewAnalytics: boolean;
-  canManageReturns: boolean;
+  canManageReturnExchange: boolean;
 }
 
 export const hasPermission = (user: User | null, permission: keyof Permissions): boolean => {
@@ -49,5 +49,5 @@ export const canAccessAnalytics = (user: User | null): boolean => {
 }; 
 
 export const canAccessReturns = (user: User | null): boolean => {
-  return hasPermission(user, 'canManageReturns');
+  return hasPermission(user, 'canManageReturnExchange');
 };
