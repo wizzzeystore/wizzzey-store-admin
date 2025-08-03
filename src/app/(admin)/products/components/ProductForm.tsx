@@ -88,11 +88,12 @@ export default function ProductForm({ initialData }: ProductFormProps) {
   const [deletedImages, setDeletedImages] = useState<string[]>([]); // store URLs of images marked for deletion
 
   // Dynamic fields
-  const [sizes, setSizes] = useState<string[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const [colors, setColors] = useState<{ name: string; code: string }[]>([]);
-  const [seoKeywords, setSeoKeywords] = useState<string[]>([]);
-  const [media, setMedia] = useState<{ url: string; type: "image" | "video"; alt?: string }[]>([]);
+  const [sizes, setSizes] = useState<string[]>(initialData?.availableSizes || []);
+  const [tags, setTags] = useState<string[]>(initialData?.tags || []);
+  const [tagsInput, setTagsInput] = useState<string>(initialData?.tags?.join(', ') || '');
+  const [colors, setColors] = useState<{ name: string; code: string }[]>(initialData?.colors || []);
+  const [seoKeywords, setSeoKeywords] = useState<string[]>(initialData?.seo?.keywords || []);
+  const [media, setMedia] = useState<{ url: string; type: "image" | "video"; alt?: string }[]>(initialData?.media || []);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -206,6 +207,16 @@ export default function ProductForm({ initialData }: ProductFormProps) {
   const addTag = () => setTags([...tags, ""]);
   const updateTag = (i: number, value: string) => setTags(tags.map((t, idx) => (idx === i ? value : t)));
   const removeTag = (i: number) => setTags(tags.filter((_, idx) => idx !== i));
+
+  // Handle comma-separated tags input
+  const handleTagsInput = (value: string) => {
+    setTagsInput(value);
+    const tagArray = value
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+    setTags(tagArray);
+  };
 
   const addColor = () => setColors([...colors, { name: "", code: "" }]);
   const updateColor = (i: number, key: "name" | "code", value: string) => setColors(colors.map((c, idx) => (idx === i ? { ...c, [key]: value } : c)));
@@ -608,13 +619,16 @@ export default function ProductForm({ initialData }: ProductFormProps) {
             {/* Tags */}
             <div className="flex flex-col gap-2">
               <FormLabel>Tags</FormLabel>
-              {tags.map((tag, i) => (
-                <div key={i} className="flex gap-2 mb-2">
-                  <Input value={tag} onChange={e => updateTag(i, e.target.value)} placeholder="Tag" />
-                  <Button type="button" variant="destructive" size="icon" onClick={() => removeTag(i)}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={addTag}><Plus className="h-4 w-4" /> Add Tag</Button>
+              <Textarea
+                placeholder="Enter tags separated by commas (e.g., fashion, summer, casual, trending)"
+                value={tagsInput}
+                onChange={(e) => handleTagsInput(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+              <FormDescription>
+                Type your tags separated by commas. Each tag will be automatically trimmed and empty tags will be ignored.
+              </FormDescription>
             </div>
             {/* Colors */}
             <div className="flex flex-col gap-2">
