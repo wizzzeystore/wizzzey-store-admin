@@ -50,7 +50,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
           email: user.email || '',
           password: '',
           role: user.role || 'Customer',
-          assignedBrand: user.assignedBrand || { _id: '', name: '', slug: '' },
+          assignedBrand: user.assignedBrand ? user.assignedBrand : { _id: '', name: '', slug: '' },
           phone: user.phone || '',
           isActive: user.isActive ?? true,
           permissions: user.permissions || {
@@ -122,9 +122,15 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
     setIsLoading(true);
 
     try {
+      // Handle assignedBrand properly - send null if no brand is assigned
+      let assignedBrand = null;
+      if (formData.assignedBrand && formData.assignedBrand._id && formData.assignedBrand._id !== '') {
+        assignedBrand = formData.assignedBrand._id;
+      }
+
       const submitData = {
         ...formData,
-        assignedBrand: formData.assignedBrand || undefined
+        assignedBrand: assignedBrand
       };
 
       let response;
@@ -305,7 +311,7 @@ export default function UserFormDialog({ isOpen, onClose, user }: UserFormDialog
               </Label>
               <Select 
                 value={formData.assignedBrand ? formData.assignedBrand._id : "none"} 
-                onValueChange={(value) => handleInputChange('assignedBrand', value === "none" ? undefined : { _id: value, name: '', slug: '' })}
+                onValueChange={(value) => handleInputChange('assignedBrand', value === "none" ? { _id: '', name: '', slug: '' } : { _id: value, name: '', slug: '' })}
                 disabled={isLoadingBrands}
               >
                 <SelectTrigger>
