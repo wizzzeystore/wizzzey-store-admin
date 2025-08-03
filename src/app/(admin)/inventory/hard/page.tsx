@@ -55,8 +55,8 @@ export default function HardInventoryPage() {
       
       if (response.type === 'OK' && response.data?.hardInventoryItems) {
         setHardInventory(response.data.hardInventoryItems);
-        if (response.pagination) {
-          setPagination(prev => ({ ...prev, pageCount: response.pagination!.totalPages }));
+        if (response.meta) {
+          setPagination(prev => ({ ...prev, pageCount: response.meta!.totalPages }));
         }
         // Show success toast for empty results
         if (response.data.hardInventoryItems.length === 0) {
@@ -206,6 +206,7 @@ export default function HardInventoryPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='sku'
         filterPlaceholder='Filter by SKU...'
       />

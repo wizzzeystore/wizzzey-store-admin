@@ -35,6 +35,8 @@ export default function CustomersPage() {
     role: 'Customer',
   });
 
+  const totalCount = data?.meta?.total || 0;
+
   const handleViewCustomer = (customerId: string) => {
     router.push(`/customers/${customerId}`);
   };
@@ -92,6 +94,7 @@ export default function CustomersPage() {
       <PageHeader
         title="Customers"
         description="Manage your customer accounts."
+        count={totalCount}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
@@ -151,6 +154,7 @@ export default function CustomersPage() {
           isLoading={isLoading}
           pagination={pagination}
           setPagination={setPagination}
+          pageCount={data?.meta?.totalPages || 1}
           enableRowSelection
         />
       </div>

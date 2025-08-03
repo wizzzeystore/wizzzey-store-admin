@@ -18,6 +18,7 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [pageCount, setPageCount] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const { toast } = useToast();
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
@@ -29,8 +30,9 @@ export default function ProductsPage() {
       const response = await getProducts(pagination.pageIndex + 1, pagination.pageSize);
       if (response.type === 'OK' && response.data?.products) {
         setProducts(response.data.products);
-        if (response.pagination) {
-            setPageCount(response.pagination.totalPages);
+        if (response.meta) {
+            setPageCount(response.meta.totalPages);
+            setTotalCount(response.meta.total);
         }
       } else {
         toast({ title: "Error", description: response.message || "Failed to fetch products.", variant: "destructive" });
@@ -108,6 +110,7 @@ export default function ProductsPage() {
       <PageHeader
         title="Products"
         description="Manage all products in your store."
+        count={totalCount}
         actions={
           <div className="flex gap-2">
             {selectedCount > 0 && (

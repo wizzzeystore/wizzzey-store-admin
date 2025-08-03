@@ -52,8 +52,8 @@ export default function ActivityLogsPage() {
       const response = await getActivityLogs(pagination.pageIndex + 1, pagination.pageSize);
       if (response.type === 'OK' && response.data?.activityLogs) {
         setLogs(response.data.activityLogs);
-        if (response.pagination) {
-           setPagination(prev => ({ ...prev, pageCount: response.pagination!.totalPages }));
+        if (response.meta) {
+           setPagination(prev => ({ ...prev, pageCount: response.meta!.totalPages }));
         }
       } else {
         toast({ title: "Error", description: response.message || "Failed to fetch activity logs.", variant: "destructive" });
@@ -88,6 +88,7 @@ export default function ActivityLogsPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='action'
         filterPlaceholder='Filter by action...'
       />

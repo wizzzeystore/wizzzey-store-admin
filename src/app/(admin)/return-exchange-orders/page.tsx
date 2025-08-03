@@ -11,20 +11,26 @@ export default function ReturnExchangeOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     setLoading(true);
     fetchAllReturnRequests({ page })
       .then(res => {
         setRequests(res.data.requests || []);
-        setTotalPages(res.pagination?.totalPages || 1);
+        setTotalPages(res.meta?.totalPages || 1);
+        setTotalCount(res.meta?.total || 0);
       })
       .finally(() => setLoading(false));
   }, [page]);
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader title="Return/Exchange Orders" description="Manage all return and exchange requests." />
+      <PageHeader 
+        title="Return/Exchange Orders" 
+        description="Manage all return and exchange requests."
+        count={totalCount}
+      />
       <Card className="p-4 mt-4">
         {loading ? (
           <div>Loading...</div>

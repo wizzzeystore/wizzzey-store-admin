@@ -33,10 +33,10 @@ export default function ProductStockLevelsPage() {
       
       if (response.type === 'OK' && response.data?.inventory) { 
         setInventoryItems(response.data.inventory);
-        if (response.pagination) {
+        if (response.meta) {
             setPagination(prev => ({
                 ...prev,
-                pageCount: response.pagination!.totalPages,
+                pageCount: response.meta!.totalPages,
             }));
         }
         // Show success toast for empty results
@@ -126,6 +126,7 @@ export default function ProductStockLevelsPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='productId' 
         filterPlaceholder='Filter by product ID...'
       />

@@ -26,10 +26,10 @@ export default function FaqsPage() {
       const response = await getFaqs(pagination.pageIndex + 1, pagination.pageSize);
       if (response.type === 'OK' && response.data?.faqs) {
         setFaqs(response.data.faqs);
-        if (response.pagination) {
+        if (response.meta) {
             setPagination(prev => ({
                 ...prev,
-                pageCount: response.pagination!.totalPages,
+                pageCount: response.meta!.totalPages,
             }));
         }
       } else {
@@ -98,6 +98,7 @@ export default function FaqsPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='question'
         filterPlaceholder='Filter FAQs by question...'
       />

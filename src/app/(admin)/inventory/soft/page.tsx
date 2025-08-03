@@ -32,8 +32,8 @@ export default function SoftInventoryPage() {
       
       if (response.type === 'OK' && response.data?.softInventoryItems) {
         setSoftInventory(response.data.softInventoryItems);
-        if (response.pagination) {
-            setPagination(prev => ({ ...prev, pageCount: response.pagination!.totalPages }));
+        if (response.meta) {
+            setPagination(prev => ({ ...prev, pageCount: response.meta!.totalPages }));
         }
         // Show success toast for empty results
         if (response.data.softInventoryItems.length === 0) {
@@ -124,6 +124,7 @@ export default function SoftInventoryPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='sku'
         filterPlaceholder='Filter by SKU...'
       />

@@ -27,6 +27,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10, pageCount: 1 });
+  const [totalCount, setTotalCount] = useState(0);
   const [stats, setStats] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const { toast } = useToast();
@@ -49,11 +50,12 @@ export default function UsersPage() {
 
       if (response.type === 'OK' && response.data?.users) {
         setUsers(response.data.users);
-        if (response.pagination) {
+        if (response.meta) {
           setPagination(prev => ({
             ...prev,
-            pageCount: response.pagination!.totalPages,
+            pageCount: response.meta!.totalPages,
           }));
+          setTotalCount(response.meta.total);
         }
       } else {
         toast({ title: "Error", description: response.message || "Failed to fetch users.", variant: "destructive" });
@@ -171,6 +173,7 @@ export default function UsersPage() {
       <PageHeader
         title="User Management"
         description="Manage users, roles, and permissions across the platform."
+        count={totalCount}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => { fetchData(); fetchStats(); }} disabled={isLoading}>
@@ -284,6 +287,7 @@ export default function UsersPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='email'
         filterPlaceholder='Filter by email...'
       />

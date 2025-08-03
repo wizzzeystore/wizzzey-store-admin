@@ -15,7 +15,7 @@ export interface UsersResponse {
   data: {
     users: User[];
   };
-  pagination: {
+  meta: {
     total: number;
     page: number;
     limit: number;

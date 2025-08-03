@@ -16,6 +16,7 @@ export default function BrandsPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10, pageCount: 1 });
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
@@ -26,11 +27,12 @@ export default function BrandsPage() {
       const response = await getBrands(pagination.pageIndex + 1, pagination.pageSize);
       if (response.type === 'OK' && response.data?.brands) {
         setBrands(response.data.brands);
-        if (response.pagination) {
+        if (response.meta) {
             setPagination(prev => ({
                 ...prev,
-                pageCount: response.pagination!.totalPages,
+                pageCount: response.meta!.totalPages,
             }));
+            setTotalCount(response.meta.total);
         }
       } else {
         toast({ title: "Error", description: response.message || "Failed to fetch brands.", variant: "destructive" });
@@ -77,6 +79,7 @@ export default function BrandsPage() {
       <PageHeader
         title="Brands"
         description="Manage your product brands."
+        count={totalCount}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchData} disabled={isLoading}>
@@ -98,6 +101,7 @@ export default function BrandsPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='name'
         filterPlaceholder='Filter brands by name...'
       />

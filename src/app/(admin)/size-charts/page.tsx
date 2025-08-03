@@ -17,6 +17,7 @@ export default function SizeChartsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10, pageCount: 1 });
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -25,9 +26,16 @@ export default function SizeChartsPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const response = await getSizeCharts();
+      const response = await getSizeCharts(pagination.pageIndex + 1, pagination.pageSize);
       if (response.type === 'OK' && response.data?.sizeCharts) {
         setSizeCharts(response.data.sizeCharts);
+        if (response.meta) {
+          setPagination(prev => ({
+            ...prev,
+            pageCount: response.meta!.totalPages,
+          }));
+          setTotalCount(response.meta.total);
+        }
       } else {
         toast({ 
           title: "Error", 
@@ -48,7 +56,8 @@ export default function SizeChartsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   const handleUpload = async (formData: FormData) => {
     setIsUploading(true);
@@ -114,6 +123,7 @@ export default function SizeChartsPage() {
       <PageHeader
         title="Size Charts"
         description="Manage size charts for your products."
+        count={totalCount}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchData} disabled={isLoading}>
@@ -134,6 +144,7 @@ export default function SizeChartsPage() {
         isLoading={isLoading}
         pagination={pagination}
         setPagination={setPagination}
+        pageCount={pagination.pageCount}
         filterColumn='title'
         filterPlaceholder='Filter size charts by title...'
       />

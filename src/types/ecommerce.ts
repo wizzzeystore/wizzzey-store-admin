@@ -329,7 +329,7 @@ export interface PaginatedResponse<TData = any, TKey extends string = string> ex
   data?: {
     [K in TKey]?: TData[]; // e.g., products: Product[]
   };
-  pagination?: {
+  meta?: {
     total: number;
     page: number;
     limit: number;

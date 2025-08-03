@@ -381,7 +381,7 @@ export const getUsers = async (page = 1, limit = 10, filters: Record<string,any>
       data: {
         users: response.data.users || []
       },
-      pagination: response.meta
+      meta: response.meta
     };
   }
   
@@ -398,7 +398,7 @@ export const getUsersByRole = async (role: string, page = 1, limit = 10): Promis
       data: {
         users: response.data.users || []
       },
-      pagination: response.data.pagination
+      meta: response.meta
     };
   }
   
@@ -780,8 +780,8 @@ export const syncPlatformData = async (platform: string, items: any[]): Promise<
 };
 
 // Size Chart API functions
-export const getSizeCharts = async (): Promise<ApiResponse<{ sizeCharts: SizeChart[] }>> => {
-  return fetchApi<ApiResponse<{ sizeCharts: SizeChart[] }>>('size-charts');
+export const getSizeCharts = async (page = 1, limit = 10): Promise<PaginatedResponse<SizeChart, 'sizeCharts'>> => {
+  return fetchApi<PaginatedResponse<SizeChart, 'sizeCharts'>>(`size-charts?page=${page}&limit=${limit}`);
 };
 
 export const createSizeChart = async (formData: FormData): Promise<ApiResponse<SizeChart>> => {
