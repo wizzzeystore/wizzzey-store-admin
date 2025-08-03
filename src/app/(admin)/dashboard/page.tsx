@@ -216,43 +216,47 @@ export default function DashboardPage() {
                  <div className="flex items-center justify-center h-full text-muted-foreground">No product data available.</div>
               )}
             </CardContent>
-          </Card>
-
-          <CleanupStatusWidget />
+          </Card>       
         </div>
       </div>
       
-      <Card className="mt-8 shadow-lg">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
-            <Link href="/activity-logs" className="text-sm text-primary hover:underline">View all activity &rarr;</Link>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingActivity ? (
-            <div className="space-y-4"> {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)} </div>
-          ) : recentActivity.length > 0 ? (
-            <div className="space-y-4">
-              {recentActivity.map(log => (
-                  <div key={log.id} className="flex items-center p-2 rounded-md hover:bg-muted">
-                      <Activity className="h-5 w-5 mr-3 text-accent flex-shrink-0" />
-                      <div className="flex-grow">
-                          <p className="text-sm font-medium">
-                            User '{log.user?.name || log.user?.email || log.userId.substring(0,8)}...' {log.action.toLowerCase()} 
-                            {log.entityType && ` ${log.entityType.toLowerCase()}`}
-                            {log.details && (log.details as any).name ? ` '${(log.details as any).name}'.` : '.'}
-                          </p>
-                          {log.createdAt && <p className="text-xs text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</p>}
-                      </div>
-                  </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">No recent activity.</div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              <Link href="/activity-logs" className="text-sm text-primary hover:underline">View all activity &rarr;</Link>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingActivity ? (
+              <div className="space-y-4"> {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)} </div>
+            ) : recentActivity.length > 0 ? (
+              <div className="space-y-4">
+                {recentActivity.map(log => (
+                    <div key={log.id} className="flex items-center p-2 rounded-md hover:bg-muted">
+                        <Activity className="h-5 w-5 mr-3 text-accent flex-shrink-0" />
+                        <div className="flex-grow">
+                            <p className="text-sm font-medium">
+                              User '{log.user?.name || log.user?.email || log.userId.substring(0,8)}...' {log.action.toLowerCase()} 
+                              {log.entityType && ` ${log.entityType.toLowerCase()}`}
+                              {log.details && (log.details as any).name ? ` '${(log.details as any).name}'.` : '.'}
+                            </p>
+                            {log.createdAt && <p className="text-xs text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</p>}
+                        </div>
+                    </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">No recent activity.</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div>
+          <CleanupStatusWidget />
+        </div>
+      </div>
     </>
   );
 }
